@@ -21,12 +21,13 @@ async function startRound(supabase: SB, roomId: string) {
   const { theme, letter } = drawRound({ prevTheme: prev?.theme });
   const endsAt = new Date(Date.now() + FILL_SECONDS * 1000).toISOString();
 
-  const { data: round } = await supabase
+  const { data: round, error } = await supabase
     .from("rounds")
     .insert({ room_id: roomId, theme, letter, phase: "preencher", ends_at: endsAt })
     .select().single();
+  if (error || !round) throw new Error(error?.message ?? "Falha ao criar rodada");
   await supabase.from("rooms")
-    .update({ status: "playing", current_round_id: round!.id }).eq("id", roomId);
+    .update({ status: "playing", current_round_id: round.id }).eq("id", roomId);
 }
 
 export async function startGame(input: { roomId: string; playerId: string }) {
@@ -79,7 +80,11 @@ async function maybeAdvanceFromFill(supabase: SB, roundId: string, timeUp: boole
     const answered = new Set((answers ?? []).map((a) => a.player_id));
     const missing = (players ?? []).filter((p) => !answered.has(p.id))
       .map((p) => ({ round_id: roundId, player_id: p.id, text: "" }));
-    if (missing.length) await supabase.from("answers").insert(missing);
+    // upsert com ignoreDuplicates: evita erro se um envio tardio correr com o auto-avanço
+    if (missing.length) {
+      await supabase.from("answers")
+        .upsert(missing, { onConflict: "round_id,player_id", ignoreDuplicates: true });
+    }
     await supabase.from("rounds").update({ phase: "votar" }).eq("id", roundId);
   }
 }

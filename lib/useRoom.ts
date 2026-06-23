@@ -34,19 +34,29 @@ export function useRoom(code: string): RoomState {
     setState({ room, players: players ?? [], round, answers, votes, loading: false });
   }, [code]);
 
+  const roomId = state.room?.id ?? null;
+  const roundId = state.round?.id ?? null;
+
   useEffect(() => {
-    load();
+    let active = true;
+    const reload = () => { if (active) load(); };
+    reload();
+
+    // Assina apenas as mudanças desta sala/rodada (evita reloads de outras salas).
     const supabase = createClient();
-    const channel = supabase
-      .channel(`room:${code}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rooms" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "players" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "rounds" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "votes" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [code, load]);
+    const channel = supabase.channel(`room:${code}:${roomId ?? "new"}:${roundId ?? "none"}`);
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: `code=eq.${code}` }, reload);
+    if (roomId) {
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "players", filter: `room_id=eq.${roomId}` }, reload);
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "rounds", filter: `room_id=eq.${roomId}` }, reload);
+    }
+    if (roundId) {
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "answers", filter: `round_id=eq.${roundId}` }, reload);
+      channel.on("postgres_changes", { event: "*", schema: "public", table: "votes", filter: `round_id=eq.${roundId}` }, reload);
+    }
+    channel.subscribe();
+    return () => { active = false; supabase.removeChannel(channel); };
+  }, [code, roomId, roundId, load]);
 
   return state;
 }
