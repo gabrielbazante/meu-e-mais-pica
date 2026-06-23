@@ -45,8 +45,14 @@ animação de troca de posições. A partida é infinita até o dono encerrar.
    - Todos escrevem a resposta (palavra/frase do tema começando com a letra).
    - **Timer de 1 minuto** apenas nesta fase.
    - Botão "O meu é mais pica" envia a resposta.
-   - Avança quando **todos enviam** OU **o tempo acaba** (respostas vazias contam como
-     enviadas em branco).
+   - **Palavra duplicada:** se dois jogadores enviam a mesma palavra (comparada de
+     forma **normalizada** — sem maiúsculas/acentos/espaços nas pontas), vale a de
+     **quem confirmou primeiro** (menor `submitted_at`; empate exato desempatado por
+     `player_id`). A resposta do(s) jogador(es) posterior(es) é **recusada e apagada**,
+     com aviso *"'X' já foi usada — manda outra!"*, e ele(s) reenvia(m). O timer **segue
+     correndo**; quem não reenviar a tempo entra em branco.
+   - Avança quando **todos enviam** (uma resposta válida, não recusada) OU **o tempo
+     acaba** (respostas faltantes contam como enviadas em branco).
 
 4. **Votar (sem tempo)**
    - As respostas ficam visíveis para todos, junto dos nomes.

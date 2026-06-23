@@ -4,6 +4,7 @@ import { drawRound } from "@/lib/game/draw";
 import { tallyRound } from "@/lib/game/tally";
 import { resolveTiebreak } from "@/lib/game/tiebreak";
 import { fillPhaseComplete, votePhaseComplete, canStart, FILL_SECONDS } from "@/lib/game/phase";
+import { isDuplicateLater } from "@/lib/game/dedup";
 import type { Player, Vote } from "@/lib/game/types";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
@@ -51,13 +52,32 @@ export async function endGame(input: { roomId: string; playerId: string }) {
   await supabase.from("rooms").update({ status: "ended" }).eq("id", input.roomId);
 }
 
-export async function submitAnswer(input: { roundId: string; playerId: string; text: string }) {
+export async function submitAnswer(
+  input: { roundId: string; playerId: string; text: string },
+): Promise<{ taken: boolean; word?: string }> {
   const supabase = createServerClient();
+  const word = input.text.trim();
   await supabase.from("answers").upsert(
-    { round_id: input.roundId, player_id: input.playerId, text: input.text.trim(), submitted_at: new Date().toISOString() },
+    { round_id: input.roundId, player_id: input.playerId, text: word, submitted_at: new Date().toISOString() },
     { onConflict: "round_id,player_id" },
   );
+
+  // Duplicata: se outro jogador já confirmou a mesma palavra (normalizada) antes,
+  // a resposta deste jogador é recusada e apagada — ele reenvia outra.
+  const { data: rows } = await supabase
+    .from("answers").select("player_id,text,submitted_at").eq("round_id", input.roundId);
+  const all = (rows ?? []).map((a) => ({
+    playerId: a.player_id, text: a.text, submittedAt: new Date(a.submitted_at).getTime(),
+  }));
+  const me = all.find((a) => a.playerId === input.playerId);
+  if (me && isDuplicateLater(me, all)) {
+    await supabase.from("answers").delete()
+      .eq("round_id", input.roundId).eq("player_id", input.playerId);
+    return { taken: true, word };
+  }
+
   await maybeAdvanceFromFill(supabase, input.roundId, false);
+  return { taken: false };
 }
 
 export async function expireFill(input: { roundId: string }) {

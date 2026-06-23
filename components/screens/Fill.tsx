@@ -12,6 +12,7 @@ export function Fill({ round, players, answers, meId, isHost }: {
   const [text, setText] = useState(mine?.text ?? "");
   const [sent, setSent] = useState(!!mine);
   const [left, setLeft] = useState(60);
+  const [warn, setWarn] = useState("");
 
   useEffect(() => {
     const end = round.ends_at ? new Date(round.ends_at).getTime() : Date.now() + 60000;
@@ -48,10 +49,19 @@ export function Fill({ round, players, answers, meId, isHost }: {
         />
         <Button
           disabled={sent || !text.trim()}
-          onClick={async () => { setSent(true); await submitAnswer({ roundId: round.id, playerId: meId, text }); }}
+          onClick={async () => {
+            setSent(true);
+            setWarn("");
+            const res = await submitAnswer({ roundId: round.id, playerId: meId, text });
+            if (res?.taken) {
+              setSent(false);
+              setWarn(`"${res.word}" já foi usada — manda outra! 😅`);
+            }
+          }}
         >
           {sent ? "Enviado ✅" : "O meu é mais pica 🔥"}
         </Button>
+        {warn && <p className="text-center font-bold text-party-red">{warn}</p>}
       </Card>
 
       <p className="text-center font-bold opacity-70">{sentCount}/{players.length} responderam</p>
