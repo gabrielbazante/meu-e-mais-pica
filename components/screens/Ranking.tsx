@@ -1,11 +1,16 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { BlockAvatar } from "@/components/ui/BlockAvatar";
 import type { PlayerRow } from "@/lib/supabase/database.types";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
 export function Ranking({ players }: { players: PlayerRow[] }) {
   const ordered = [...players].sort((a, b) => b.total_points - a.total_points);
+  // cor por ordem de entrada (estável por pessoa, distinta entre jogadores)
+  const joinIndex = new Map(
+    [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at)).map((p, i) => [p.id, i]),
+  );
   const refs = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevTops = useRef<Map<string, number>>(new Map());
 
@@ -47,6 +52,7 @@ export function Ranking({ players }: { players: PlayerRow[] }) {
           ref={(el) => { if (el) refs.current.set(p.id, el); }}
           className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-4 py-3 shadow-chunky">
           <span className="w-8 text-center text-xl font-black">{MEDALS[i] ?? `${i + 1}º`}</span>
+          <BlockAvatar seed={p.id} size={40} colorIndex={joinIndex.get(p.id)} />
           <span className="flex-1 font-extrabold">{p.name}</span>
           <span className="text-xl font-black">{p.total_points}</span>
         </div>
