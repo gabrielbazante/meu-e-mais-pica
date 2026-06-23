@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔥 Meu É Mais Pica
 
-## Getting Started
+> O jogo de respostas mais pica da festa.
 
-First, run the development server:
+Cada rodada sorteia um **tema** e uma **letra**. Todo mundo escreve a melhor resposta com aquela letra. Depois, todos votam — e o que ganhar mais votos leva os pontos. No final, o ranking revela quem tem o melhor gosto da galera.
+
+---
+
+## Como jogar
+
+1. Um jogador cria a sala e compartilha o código
+2. Todos entram com o código
+3. Com 3+ jogadores, o dono inicia o jogo
+4. Cada rodada: escreva sua resposta → vote na melhor → veja o ranking
+5. Quem acumular mais pontos vence 🏆
+
+---
+
+## Stack
+
+- **Next.js** (App Router) + **TypeScript**
+- **Supabase** — banco de dados e realtime
+- **Tailwind CSS v4** — estilo chunky com sombras e bordas
+- **Fontes:** Fredoka (corpo) + Baloo 2 (títulos e botões)
+
+---
+
+## Rodar localmente
 
 ```bash
+# instalar dependências
+npm install
+
+# variáveis de ambiente
+cp .env.example .env.local
+# preencher NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# subir
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Banco de dados
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+As migrations ficam em `supabase/migrations/`. Para aplicar:
 
-## Learn More
+```bash
+npx supabase db push
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Testes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm test
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O projeto está configurado para Vercel. Basta importar o repositório em vercel.com/new e adicionar as variáveis de ambiente do Supabase.
+
+---
+
+Made with 🔥 by @gabrielbazante
