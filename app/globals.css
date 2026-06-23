@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@theme {
+  --color-ink: #1a1a2e;
+  --color-party-yellow: #ffd23f;
+  --color-party-red: #ff5252;
+  --color-party-teal: #4ecdc4;
+  --color-party-purple: #a29bfe;
+  --color-party-pink: #ff8fab;
+  --color-party-blue: #74b9ff;
+}
+
+@utility border-3 {
+  border-width: 3px;
+}
+@utility shadow-chunky {
+  box-shadow: 4px 4px 0 #1a1a2e;
+}
+@utility shadow-chunkySm {
+  box-shadow: 3px 3px 0 #1a1a2e;
+}
+
+body {
+  background: var(--color-party-yellow);
+  color: var(--color-ink);
+}
+* {
+  -webkit-tap-highlight-color: transparent;
+}
