@@ -1182,33 +1182,61 @@ git commit -m "feat: realtime room state hook"
 
 ## Task 13: Tema visual Festa Cartoon + componentes base
 
+> **IMPORTANTE — Tailwind v4:** este projeto usa **Tailwind v4** (sem `tailwind.config.ts`).
+> Tokens de tema vão em `app/globals.css` dentro de `@theme {}`, e utilitários customizados
+> via `@utility`. As classes resultantes (`bg-party-red`, `text-ink`, `border-ink`,
+> `shadow-chunky`, `shadow-chunkySm`, `border-3`) são as MESMAS usadas pelos componentes
+> das tasks seguintes — defina-as exatamente com esses nomes.
+
 **Files:**
-- Modify: `app/globals.css`, `tailwind.config.ts`
+- Modify: `app/globals.css`
 - Create: `components/ui/Button.tsx`, `components/ui/Card.tsx`
 
-- [ ] **Step 1: Tokens de cor no Tailwind**
+- [ ] **Step 1: Tokens de tema + utilitários no globals.css**
 
-Modify `tailwind.config.ts` — adicionar ao `theme.extend`:
-
-```ts
-extend: {
-  colors: {
-    ink: "#1a1a2e",
-    party: { yellow: "#ffd23f", red: "#ff5252", teal: "#4ecdc4", purple: "#a29bfe", pink: "#ff8fab", blue: "#74b9ff" },
-  },
-  boxShadow: { chunky: "4px 4px 0 #1a1a2e", chunkySm: "3px 3px 0 #1a1a2e" },
-  borderWidth: { 3: "3px" },
-},
-```
-
-- [ ] **Step 2: Fundo do app**
-
-Modify `app/globals.css` — adicionar após as diretivas `@tailwind`:
+`app/globals.css` já começa com `@import "tailwindcss";` e um bloco `@theme inline { … }`
+gerado pelo scaffold (background/foreground/fonts). **Mantenha** esse bloco e **adicione**
+o seguinte abaixo dele:
 
 ```css
-body { @apply bg-party-yellow text-ink; }
-* { -webkit-tap-highlight-color: transparent; }
+@theme {
+  --color-ink: #1a1a2e;
+  --color-party-yellow: #ffd23f;
+  --color-party-red: #ff5252;
+  --color-party-teal: #4ecdc4;
+  --color-party-purple: #a29bfe;
+  --color-party-pink: #ff8fab;
+  --color-party-blue: #74b9ff;
+}
+
+@utility border-3 {
+  border-width: 3px;
+}
+@utility shadow-chunky {
+  box-shadow: 4px 4px 0 #1a1a2e;
+}
+@utility shadow-chunkySm {
+  box-shadow: 3px 3px 0 #1a1a2e;
+}
+
+body {
+  background: var(--color-party-yellow);
+  color: var(--color-ink);
+}
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 ```
+
+> Nota: o scaffold define `--background`/`--foreground` para preto/branco e um
+> `@media (prefers-color-scheme: dark)`. Como o jogo tem fundo fixo amarelo, o `body`
+> acima sobrescreve isso de propósito — pode remover o bloco `@media` dark se quiser.
+
+- [ ] **Step 2: Verificar o build do Tailwind**
+
+Run: `npm run build`
+Expected: build sem erros (as utilities `border-3`, `shadow-chunky`, `shadow-chunkySm`
+e as cores `party-*`/`ink` precisam compilar).
 
 - [ ] **Step 3: Button**
 
@@ -1252,7 +1280,7 @@ export function Card({ className = "", ...props }: HTMLAttributes<HTMLDivElement
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tailwind.config.ts app/globals.css components/ui
+git add app/globals.css components/ui
 git commit -m "feat: Festa Cartoon theme tokens and base UI components"
 ```
 
