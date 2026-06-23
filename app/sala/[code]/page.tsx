@@ -24,7 +24,10 @@ export default function SalaPage({ params }: { params: Promise<{ code: string }>
   switch (round.phase) {
     case "preencher": return <Fill round={round} players={players} answers={answers} meId={meId} isHost={isHost} />;
     case "votar":
-    case "desempate": return <Vote round={round} players={players} answers={answers} votes={votes} meId={meId} />;
+    case "desempate":
+      // key por fase: remonta o Vote ao passar de "votar" para "desempate"
+      // (zera o estado local de voto pra liberar a votação de desempate).
+      return <Vote key={`${round.id}:${round.phase}`} round={round} players={players} answers={answers} votes={votes} meId={meId} />;
     case "resultado": return <Result room={room} round={round} players={players} answers={answers} votes={votes} meId={meId} isHost={isHost} />;
     default: return <Center>…</Center>;
   }

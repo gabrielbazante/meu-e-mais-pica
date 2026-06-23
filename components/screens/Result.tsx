@@ -25,7 +25,7 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
           <p className="text-lg font-bold opacity-70">O mais pica da rodada</p>
           <p className="text-5xl">🔥</p>
           <p className="text-4xl font-black">{bestName}</p>
-          <Card className="bg-party-teal text-white">{bestAns?.text || "—"}</Card>
+          <Card className="!bg-party-teal text-white">{bestAns?.text || "—"}</Card>
         </div>
       ) : (
         <>
@@ -34,7 +34,7 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
           {isHost ? (
             <div className="mt-2 flex flex-col gap-2">
               <Button onClick={() => nextRound({ roomId: room.id, playerId: meId })}>Próxima rodada ▶</Button>
-              <Button className="bg-ink" onClick={() => endGame({ roomId: room.id, playerId: meId })}>Encerrar partida</Button>
+              <Button className="!bg-ink" onClick={() => endGame({ roomId: room.id, playerId: meId })}>Encerrar partida</Button>
             </div>
           ) : (
             <p className="text-center font-bold opacity-70">Aguardando o dono…</p>

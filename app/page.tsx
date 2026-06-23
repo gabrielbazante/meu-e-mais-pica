@@ -49,7 +49,7 @@ export default function Home() {
           placeholder="CÓDIGO" value={code} maxLength={4}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
         />
-        <Button onClick={handleJoin} disabled={busy} className="bg-party-teal">Entrar</Button>
+        <Button onClick={handleJoin} disabled={busy} className="!bg-party-teal">Entrar</Button>
       </Card>
       {error && <p className="text-center font-bold text-ink">{error}</p>}
     </main>
