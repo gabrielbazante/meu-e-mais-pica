@@ -58,5 +58,15 @@ create policy "public read/write rounds"  on rounds  for all using (true) with c
 create policy "public read/write answers" on answers for all using (true) with check (true);
 create policy "public read/write votes"   on votes   for all using (true) with check (true);
 
--- Habilita o Realtime (Postgres Changes) nestas tabelas.
-alter publication supabase_realtime add table rooms, players, rounds, answers, votes;
+-- Habilita o Realtime (Postgres Changes) nestas tabelas, de forma idempotente
+-- (ignora tabelas que já estejam na publicação).
+do $$
+declare t text;
+begin
+  foreach t in array array['rooms','players','rounds','answers','votes'] loop
+    begin
+      execute format('alter publication supabase_realtime add table %I', t);
+    exception when others then raise notice '% -> %', t, sqlerrm;
+    end;
+  end loop;
+end $$;
