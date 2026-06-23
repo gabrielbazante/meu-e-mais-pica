@@ -57,3 +57,6 @@ create policy "public read/write players" on players for all using (true) with c
 create policy "public read/write rounds"  on rounds  for all using (true) with check (true);
 create policy "public read/write answers" on answers for all using (true) with check (true);
 create policy "public read/write votes"   on votes   for all using (true) with check (true);
+
+-- Habilita o Realtime (Postgres Changes) nestas tabelas.
+alter publication supabase_realtime add table rooms, players, rounds, answers, votes;
