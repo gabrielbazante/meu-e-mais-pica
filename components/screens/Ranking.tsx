@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { BlockAvatar } from "@/components/ui/BlockAvatar";
+import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import type { PlayerRow } from "@/lib/supabase/database.types";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -8,9 +8,7 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 export function Ranking({ players }: { players: PlayerRow[] }) {
   const ordered = [...players].sort((a, b) => b.total_points - a.total_points);
   // cor por ordem de entrada (estável por pessoa, distinta entre jogadores)
-  const joinIndex = new Map(
-    [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at)).map((p, i) => [p.id, i]),
-  );
+  const joinIndex = colorIndexByJoin(players);
   const refs = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevTops = useRef<Map<string, number>>(new Map());
 

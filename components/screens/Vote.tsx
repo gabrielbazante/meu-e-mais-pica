@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { castVote } from "@/app/actions/game";
 import type { AnswerRow, PlayerRow, RoundRow, VoteRow } from "@/lib/supabase/database.types";
 
@@ -15,6 +16,7 @@ export function Vote({ round, players, answers, votes, meId }: {
   const [sent, setSent] = useState(!!myVote);
 
   const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
+  const joinIndex = colorIndexByJoin(players);
   const candidates = tiebreak
     ? answers.filter((a) => round.tiebreak_candidates.includes(a.player_id))
     : answers;
@@ -32,7 +34,8 @@ export function Vote({ round, players, answers, votes, meId }: {
         const self = a.player_id === meId;
         return (
           <Card key={a.player_id} className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BlockAvatar seed={a.player_id} size={32} colorIndex={joinIndex.get(a.player_id)} />
               <span className="font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
             </div>
             <p className="rounded-lg bg-party-yellow/40 px-3 py-2 font-bold">{a.text || <em className="opacity-50">em branco</em>}</p>

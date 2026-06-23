@@ -1,5 +1,13 @@
 // Mascote em bloco no estilo da logo, gerado de forma determinística a partir do
 // id do jogador: cor, olhos, boca e leve inclinação variam por pessoa.
+
+// Mapa id -> índice por ordem de entrada (cor estável e distinta entre jogadores).
+export function colorIndexByJoin(players: { id: string; joined_at: string }[]): Map<string, number> {
+  return new Map(
+    [...players].sort((a, b) => a.joined_at.localeCompare(b.joined_at)).map((p, i) => [p.id, i]),
+  );
+}
+
 function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {

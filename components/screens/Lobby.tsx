@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { startGame } from "@/app/actions/game";
 import { MIN_PLAYERS } from "@/lib/game/phase";
 import type { PlayerRow, RoomRow } from "@/lib/supabase/database.types";
@@ -10,6 +11,7 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
   const [busy, setBusy] = useState(false);
   const isHost = room.host_id === meId;
   const canStart = players.length >= MIN_PLAYERS;
+  const joinIndex = colorIndexByJoin(players);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 p-5">
@@ -23,7 +25,8 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
         <p className="font-extrabold">Jogadores ({players.length})</p>
         {players.map((p) => (
           <div key={p.id} className="flex items-center gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
-            <span>👤</span>{p.name}{p.id === room.host_id && " 👑"}
+            <BlockAvatar seed={p.id} size={32} colorIndex={joinIndex.get(p.id)} />
+            <span>{p.name}{p.id === room.host_id && " 👑"}</span>
           </div>
         ))}
       </Card>
