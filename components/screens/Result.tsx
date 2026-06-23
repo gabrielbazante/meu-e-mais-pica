@@ -24,7 +24,7 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
           <Confetti />
           <p className="text-lg font-bold opacity-70">O mais pica da rodada</p>
           <p className="text-5xl">🔥</p>
-          <p className="text-4xl font-black">{bestName}</p>
+          <p className="font-display text-4xl font-black">{bestName}</p>
           <Card className="!bg-party-teal text-white">{bestAns?.text || "—"}</Card>
         </div>
       ) : (

@@ -17,7 +17,7 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 p-5">
       <Card className="text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-party-red">Código da sala</p>
-        <p className="text-5xl font-black tracking-widest">{room.code}</p>
+        <p className="font-display text-5xl font-black tracking-widest">{room.code}</p>
         <p className="mt-1 text-sm font-semibold opacity-70">Compartilhe com a galera</p>
       </Card>
 

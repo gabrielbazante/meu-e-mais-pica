@@ -49,10 +49,10 @@ export function Ranking({ players }: { players: PlayerRow[] }) {
         <div key={p.id}
           ref={(el) => { if (el) refs.current.set(p.id, el); }}
           className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-4 py-3 shadow-chunky">
-          <span className="w-8 text-center text-xl font-black">{MEDALS[i] ?? `${i + 1}º`}</span>
+          <span className="font-display w-8 text-center text-xl font-black">{MEDALS[i] ?? `${i + 1}º`}</span>
           <BlockAvatar seed={p.id} size={40} colorIndex={joinIndex.get(p.id)} />
           <span className="flex-1 font-extrabold">{p.name}</span>
-          <span className="text-xl font-black">{p.total_points}</span>
+          <span className="font-display text-xl font-black">{p.total_points}</span>
         </div>
       ))}
     </div>
