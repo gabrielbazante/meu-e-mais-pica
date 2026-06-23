@@ -1,17 +1,32 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { startGame } from "@/app/actions/game";
+import { deleteRoom, leaveRoom } from "@/app/actions/room";
 import { MIN_PLAYERS } from "@/lib/game/phase";
 import type { PlayerRow, RoomRow } from "@/lib/supabase/database.types";
 
 export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerRow[]; meId: string }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const isHost = room.host_id === meId;
   const canStart = players.length >= MIN_PLAYERS;
   const joinIndex = colorIndexByJoin(players);
+
+  async function handleDelete() {
+    setBusy(true);
+    await deleteRoom({ roomId: room.id, hostId: meId });
+    router.push("/");
+  }
+
+  async function handleLeave() {
+    setBusy(true);
+    await leaveRoom({ roomId: room.id, playerId: meId });
+    router.push("/");
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 p-5">
@@ -32,11 +47,21 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
       </Card>
 
       {isHost ? (
-        <Button disabled={!canStart || busy} onClick={async () => { setBusy(true); await startGame({ roomId: room.id, playerId: meId }); }}>
-          {canStart ? "Começar 🔥" : `Faltam ${MIN_PLAYERS - players.length} jogador(es)`}
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button disabled={!canStart || busy} onClick={async () => { setBusy(true); await startGame({ roomId: room.id, playerId: meId }); }}>
+            {canStart ? "Começar 🔥" : `Faltam ${MIN_PLAYERS - players.length} jogador(es)`}
+          </Button>
+          <Button disabled={busy} onClick={handleDelete} className="bg-ink! text-white">
+            Apagar sala e sair
+          </Button>
+        </div>
       ) : (
-        <p className="text-center font-bold opacity-70">Aguardando o dono começar…</p>
+        <div className="flex flex-col gap-3">
+          <p className="text-center font-bold opacity-70">Aguardando o dono começar…</p>
+          <Button disabled={busy} onClick={handleLeave} className="bg-ink! text-white">
+            Sair da sala
+          </Button>
+        </div>
       )}
     </main>
   );

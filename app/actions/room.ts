@@ -50,3 +50,22 @@ export async function joinRoom(input: { code: string; playerId: string; name: st
 
   return { code };
 }
+
+export async function deleteRoom(input: { roomId: string; hostId: string }) {
+  const supabase = createServerClient();
+  const { data: room } = await supabase
+    .from("rooms").select("host_id").eq("id", input.roomId).maybeSingle();
+  if (!room || room.host_id !== input.hostId) throw new Error("Sem permissão");
+  const { error } = await supabase.from("rooms").delete().eq("id", input.roomId);
+  if (error) throw new Error(error.message);
+}
+
+export async function leaveRoom(input: { roomId: string; playerId: string }) {
+  const supabase = createServerClient();
+  const { error } = await supabase
+    .from("players")
+    .delete()
+    .eq("id", input.playerId)
+    .eq("room_id", input.roomId);
+  if (error) throw new Error(error.message);
+}

@@ -34,7 +34,7 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-5">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-5 -mt-16">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.png" alt="O meu é mais pica" className="mx-auto w-full max-w-sm drop-shadow-[4px_4px_0_rgba(26,26,46,0.25)]" />
       <h1 className="sr-only">O meu é mais pica</h1>
