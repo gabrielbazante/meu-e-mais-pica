@@ -1,0 +1,60 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { submitAnswer, expireFill } from "@/app/actions/game";
+import type { AnswerRow, PlayerRow, RoundRow } from "@/lib/supabase/database.types";
+
+export function Fill({ round, players, answers, meId, isHost }: {
+  round: RoundRow; players: PlayerRow[]; answers: AnswerRow[]; meId: string; isHost: boolean;
+}) {
+  const mine = answers.find((a) => a.player_id === meId);
+  const [text, setText] = useState(mine?.text ?? "");
+  const [sent, setSent] = useState(!!mine);
+  const [left, setLeft] = useState(60);
+
+  useEffect(() => {
+    const end = round.ends_at ? new Date(round.ends_at).getTime() : Date.now() + 60000;
+    const t = setInterval(() => {
+      const s = Math.max(0, Math.round((end - Date.now()) / 1000));
+      setLeft(s);
+      if (s === 0 && isHost) expireFill({ roundId: round.id }); // host garante o avanço
+    }, 250);
+    return () => clearInterval(t);
+  }, [round.id, round.ends_at, isHost]);
+
+  const sentCount = answers.length;
+
+  return (
+    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 p-5">
+      <div className="flex items-center justify-between">
+        <Card className="flex-1 !p-3 text-center">
+          <p className="text-xs font-bold opacity-60">TEMA</p>
+          <p className="text-xl font-black text-party-teal">{round.theme}</p>
+        </Card>
+        <div className="mx-3 rounded-xl border-3 border-ink bg-party-red px-4 py-2 text-center text-white shadow-chunkySm">
+          <p className="text-xs font-bold">LETRA</p>
+          <p className="text-3xl font-black">{round.letter}</p>
+        </div>
+        <div className="rounded-full border-3 border-ink bg-white px-3 py-2 text-xl font-black">{left}s</div>
+      </div>
+
+      <Card className="flex flex-col gap-3">
+        <input
+          autoFocus disabled={sent}
+          className="rounded-xl border-3 border-ink px-3 py-3 text-lg font-bold outline-none disabled:opacity-60"
+          placeholder={`Algo de "${round.theme}" com ${round.letter}…`}
+          value={text} onChange={(e) => setText(e.target.value)}
+        />
+        <Button
+          disabled={sent || !text.trim()}
+          onClick={async () => { setSent(true); await submitAnswer({ roundId: round.id, playerId: meId, text }); }}
+        >
+          {sent ? "Enviado ✅" : "O meu é mais pica 🔥"}
+        </Button>
+      </Card>
+
+      <p className="text-center font-bold opacity-70">{sentCount}/{players.length} responderam</p>
+    </main>
+  );
+}
