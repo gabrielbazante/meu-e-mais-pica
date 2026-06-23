@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 
 export default function Home() {
   const router = useRouter();
+  const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,15 +44,35 @@ export default function Home() {
           placeholder="Seu nome" value={name} maxLength={16}
           onChange={(e) => setName(e.target.value)}
         />
-        <Button onClick={handleCreate} disabled={busy}>Criar sala</Button>
-      </Card>
-      <Card className="flex flex-col gap-3">
-        <input
-          className="rounded-xl border-3 border-ink px-3 py-3 text-center text-2xl font-black uppercase tracking-widest outline-none"
-          placeholder="CÓDIGO" value={code} maxLength={4}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-        />
-        <Button onClick={handleJoin} disabled={busy} className="!bg-party-teal">Entrar</Button>
+
+        {mode === "create" ? (
+          <>
+            <Button onClick={handleCreate} disabled={busy}>Criar sala</Button>
+            <button
+              type="button"
+              onClick={() => { setMode("join"); setError(""); }}
+              className="mt-1 text-center font-bold text-ink/70 underline underline-offset-4"
+            >
+              Quero entrar numa sala
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              className="rounded-xl border-3 border-ink px-3 py-3 text-center text-2xl font-black uppercase tracking-widest outline-none"
+              placeholder="CÓDIGO" value={code} maxLength={4}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+            />
+            <Button onClick={handleJoin} disabled={busy} className="!bg-party-teal">Entrar</Button>
+            <button
+              type="button"
+              onClick={() => { setMode("create"); setError(""); }}
+              className="mt-1 text-center font-bold text-ink/70 underline underline-offset-4"
+            >
+              ← Quero criar uma sala
+            </button>
+          </>
+        )}
       </Card>
       {error && <p className="text-center font-bold text-ink">{error}</p>}
     </main>
