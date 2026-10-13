@@ -52,3 +52,10 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Motivo:** quem está com a aba aberta de um deploy anterior chama um ID de Server Action que o build novo não conhece (confirmado nos deploys de produção dos PRs #1 e #3). Ver "Version Skew" em `node_modules/next/dist/docs/01-app/02-guides/self-hosting.md`.
 - **Alternativa:** "Skew Protection" da Vercel (Settings → Advanced) mantém o deploy antigo atendendo clientes antigos; disponibilidade e custo dependem do plano. Não foi configurada.
 - **Impacto:** a ação que falhou não é reenviada; o usuário precisa repeti-la após a recarga. Se o `sessionStorage` estiver indisponível, não há recarga automática e o erro aparece.
+
+## Keep-alive do Supabase por Vercel Cron
+- **Decisão:** um Vercel Cron diário (`vercel.json`, 09:00 UTC) chama `/api/cron/keepalive`, que insere uma linha em `keepalive_log` e apaga as de mais de 30 dias. Autenticado por `CRON_SECRET` (comparação em tempo constante em `lib/keepalive.ts`).
+- **Motivo:** o plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem atividade.
+- **Alternativas descartadas:** `pg_cron`: jobs internos do banco podem não contar como atividade do projeto; GitHub Actions desativa workflows agendados em repositório inativo.
+- **Impacto:** exige rodar a migração `0003_keepalive.sql` manualmente. A tabela segue o padrão de RLS do projeto (anon key): insert e select livres, delete só de linhas com mais de 30 dias. `vercel.json` em vez de `vercel.ts` para não adicionar dependência.
+- **Risco aceito:** a anon key consegue inserir linhas em `keepalive_log` (limitado pela policy: `source = 'vercel-cron'` e `created_at <= now()`), e qualquer um pode lê-las. Coerente com o restante do schema, que também usa a anon key com RLS aberta.
