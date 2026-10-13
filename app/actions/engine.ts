@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { drawRound } from "@/lib/game/draw";
 import { FILL_SECONDS, COUNTDOWN_SECONDS } from "@/lib/game/phase";
+import { roundDeltas } from "@/lib/game/scoring";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
 export type SB = ReturnType<typeof createServerClient>;
@@ -40,4 +41,43 @@ export async function beginRoundCore(supabase: SB, roundId: string) {
   await supabase.from("rounds")
     .update({ theme, letter, phase: "preencher", ends_at: endsAt })
     .eq("id", roundId).eq("phase", "contagem");
+}
+
+// Finaliza a rodada: calcula deltas, aplica aos totais, grava round_scores e vai pra resultado.
+export async function finalizeRound(
+  supabase: SB, round: RoundRow, bestId: string | null = null, worstId: string | null = null,
+) {
+  const { data: playerRows } = await supabase
+    .from("players").select("id,total_points").eq("room_id", round.room_id);
+  const { data: answerRows } = await supabase
+    .from("answers").select("player_id,text").eq("round_id", round.id);
+
+  const playerIds = (playerRows ?? []).map((p) => p.id);
+  const currentTotals: Record<string, number> = {};
+  for (const p of playerRows ?? []) currentTotals[p.id] = p.total_points;
+  // respondentes = tem linha com texto nao-vazio (inclui voided → +2)
+  const answeredIds = (answerRows ?? []).filter((a) => a.text.trim() !== "").map((a) => a.player_id);
+
+  // borda <2: se nao veio melhor explicito e so ha um respondente, ele leva +10
+  let effectiveBest = bestId;
+  if (effectiveBest == null && answeredIds.length === 1) effectiveBest = answeredIds[0];
+
+  const deltas = roundDeltas({ playerIds, answeredIds, bestId: effectiveBest, worstId, currentTotals });
+
+  // Claim atomico da transicao: o UPDATE condicional na fase atual garante que apenas
+  // um chamador concorrente aplique pontos. Quem perde a corrida nao toca nos players.
+  const { data: claimed } = await supabase.from("rounds").update({
+    phase: "resultado",
+    round_scores: deltas,
+    best_winner: effectiveBest,
+    worst_loser: worstId,
+  }).eq("id", round.id).eq("phase", round.phase).select("id");
+  if (!claimed || claimed.length === 0) return;
+
+  for (const p of playerRows ?? []) {
+    const d = deltas[p.id] ?? 0;
+    if (d !== 0) {
+      await supabase.from("players").update({ total_points: p.total_points + d }).eq("id", p.id);
+    }
+  }
 }
