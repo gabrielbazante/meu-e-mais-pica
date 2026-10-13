@@ -2,6 +2,10 @@ import { createServerClient } from "@/lib/supabase/server";
 import { drawRound } from "@/lib/game/draw";
 import { FILL_SECONDS, COUNTDOWN_SECONDS } from "@/lib/game/phase";
 import { roundDeltas } from "@/lib/game/scoring";
+import { tallyRound } from "@/lib/game/tally";
+import { resolveTiebreak } from "@/lib/game/tiebreak";
+import { fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
+import type { Player, Vote } from "@/lib/game/types";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
 export type SB = ReturnType<typeof createServerClient>;
@@ -80,4 +84,112 @@ export async function finalizeRound(
       await supabase.from("players").update({ total_points: p.total_points + d }).eq("id", p.id);
     }
   }
+}
+
+// Avanca de "preencher" para "votar" quando todos responderam ou o tempo acabou.
+// NAO insere respostas em branco: quem nao enviou simplesmente nao tem linha.
+// Borda: com menos de 2 candidatos votaveis, pula a votacao e finaliza direto.
+export async function maybeAdvanceFromFill(supabase: SB, roundId: string, timeUp: boolean) {
+  const { data: round } = await supabase.from("rounds").select("*").eq("id", roundId).single<RoundRow>();
+  if (!round || round.phase !== "preencher") return;
+  const expired = timeUp || (round.ends_at != null && new Date(round.ends_at) <= new Date());
+
+  const { count: playerCount } = await supabase
+    .from("players").select("id", { count: "exact", head: true }).eq("room_id", round.room_id);
+  const { count: answeredCount } = await supabase
+    .from("answers").select("id", { count: "exact", head: true }).eq("round_id", roundId);
+  if (!fillPhaseComplete(answeredCount ?? 0, playerCount ?? 0, expired)) return;
+
+  // candidatos de voto = resposta nao-vazia e nao anulada
+  const { data: answerRows } = await supabase
+    .from("answers").select("player_id,text,voided").eq("round_id", roundId);
+  const votable = (answerRows ?? []).filter((a) => a.text.trim() !== "" && !a.voided);
+
+  if (votable.length < 2) {
+    await finalizeRound(supabase, round);
+    return;
+  }
+  await supabase.from("rounds").update({ phase: "votar" }).eq("id", roundId).eq("phase", "preencher");
+}
+
+// Apura votos. Em "votar": abre desempate do melhor (se empatar), senao do pior
+// (guardando best_winner), senao finaliza. Em "desempate": resolve conforme
+// tiebreak_kind, encadeando best→worst quando o pior ainda empata.
+// Votos que apontam para respostas anuladas sao nulificados antes do tally.
+export async function maybeTally(supabase: SB, roundId: string) {
+  const { data: round } = await supabase.from("rounds").select("*").eq("id", roundId).single<RoundRow>();
+  if (!round) return;
+  if (round.phase !== "votar" && round.phase !== "desempate") return;
+  const isTiebreak = round.phase === "desempate";
+
+  const { count: playerCount } = await supabase
+    .from("players").select("id", { count: "exact", head: true }).eq("room_id", round.room_id);
+  const { data: voteRows } = await supabase
+    .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", isTiebreak);
+  if (!votePhaseComplete(voteRows?.length ?? 0, playerCount ?? 0)) return;
+
+  const { data: playerRows } = await supabase
+    .from("players").select("id,name,total_points").eq("room_id", round.room_id);
+  const players: Player[] = (playerRows ?? []).map((p) => ({
+    id: p.id, name: p.name, totalPoints: p.total_points,
+  }));
+
+  const { data: answerRows } = await supabase
+    .from("answers").select("player_id,voided,submitted_at").eq("round_id", roundId);
+  const voided = new Set((answerRows ?? []).filter((a) => a.voided).map((a) => a.player_id));
+  const nullifyVoided = (id: string | null) => (id && voided.has(id) ? null : id);
+
+  // --- votos principais ---
+  if (!isTiebreak) {
+    const votes: Vote[] = (voteRows ?? []).map((v) => ({
+      voterId: v.voter_id, bestId: nullifyVoided(v.best_id), worstId: nullifyVoided(v.worst_id),
+    }));
+    const result = tallyRound(players, votes);
+
+    if (result.bestIds.length > 1) {
+      await supabase.from("rounds").update({
+        phase: "desempate", tiebreak_kind: "best", tiebreak_candidates: result.bestIds,
+      }).eq("id", roundId).eq("phase", "votar");
+      return;
+    }
+    const bestId = result.bestIds[0] ?? null;
+    if (result.worstIds.length > 1) {
+      await supabase.from("rounds").update({
+        phase: "desempate", tiebreak_kind: "worst", tiebreak_candidates: result.worstIds, best_winner: bestId,
+      }).eq("id", roundId).eq("phase", "votar");
+      return;
+    }
+    await finalizeRound(supabase, round, bestId, result.worstIds[0] ?? null);
+    return;
+  }
+
+  // --- votos de desempate (campo best_id = alvo escolhido) ---
+  const submittedAt: Record<string, number> = {};
+  for (const a of answerRows ?? []) submittedAt[a.player_id] = new Date(a.submitted_at).getTime();
+  const tbBest = (voteRows ?? []).map((v) => nullifyVoided(v.best_id));
+
+  // recomputa o pior a partir dos votos principais
+  const { data: origVoteRows } = await supabase
+    .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", false);
+  const origVotes: Vote[] = (origVoteRows ?? []).map((v) => ({
+    voterId: v.voter_id, bestId: nullifyVoided(v.best_id), worstId: nullifyVoided(v.worst_id),
+  }));
+  const base = tallyRound(players, origVotes);
+
+  if (round.tiebreak_kind === "best") {
+    const winner = resolveTiebreak(round.tiebreak_candidates, tbBest, submittedAt);
+    if (base.worstIds.length > 1) {
+      await supabase.from("votes").delete().eq("round_id", roundId).eq("is_tiebreak", true);
+      await supabase.from("rounds").update({
+        phase: "desempate", tiebreak_kind: "worst", tiebreak_candidates: base.worstIds, best_winner: winner,
+      }).eq("id", roundId).eq("phase", "desempate");
+      return;
+    }
+    await finalizeRound(supabase, round, winner, base.worstIds[0] ?? null);
+    return;
+  }
+
+  // tiebreak_kind === "worst"
+  const worstLoser = resolveTiebreak(round.tiebreak_candidates, tbBest, submittedAt);
+  await finalizeRound(supabase, round, round.best_winner, worstLoser);
 }
