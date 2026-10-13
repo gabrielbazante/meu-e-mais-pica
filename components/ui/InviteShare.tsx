@@ -60,6 +60,9 @@ export function InviteShare({ code }: { code: string }) {
         <button type="button" onClick={copy} className={BTN + " bg-party-yellow"}>
           {status === "ok" ? "Copiado ✓" : status === "fail" ? "Não deu pra copiar" : "Copiar link"}
         </button>
+        <span className="sr-only" role="status" aria-live="polite">
+          {status === "ok" ? "Link copiado" : status === "fail" ? "Não deu pra copiar o link" : ""}
+        </span>
         {status === "fail" && (
           <p className="select-all break-all rounded-xl bg-party-yellow/40 px-3 py-2 text-sm font-bold">{link}</p>
         )}
