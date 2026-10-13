@@ -17,6 +17,11 @@ const baloo2 = Baloo_2({
 export const metadata: Metadata = {
   title: "Meu É Mais Pica",
   description: "O jogo de respostas mais pica da festa",
+  appleWebApp: {
+    capable: true,
+    title: "Mais Pica",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({
