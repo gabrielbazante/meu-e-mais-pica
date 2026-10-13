@@ -77,7 +77,16 @@ export async function joinRoom(
     : await supabase.from("players").insert({
         id: seatId, room_id: room.id, name: input.name, connected: true, total_points: 0,
       });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Duas entradas simultaneas do mesmo aparelho: a outra inseriu primeiro (23505).
+    // Se a linha ja esta NESTA sala, e idempotente; senao propaga o erro.
+    if (error.code === "23505") {
+      const { data: row } = await supabase
+        .from("players").select("room_id").eq("id", seatId).maybeSingle();
+      if (row?.room_id === room.id) return { code, playerId: seatId };
+    }
+    throw new Error(error.message);
+  }
   return { code, playerId: seatId };
 }
 

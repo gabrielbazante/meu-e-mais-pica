@@ -1,10 +1,12 @@
 import type { Player, Vote } from "./types";
 
+// ATENCAO: worstIds e points daqui NAO excluem o vencedor do melhor (a mesma pessoa pode
+// aparecer nos dois). O engine usa worstIdsExcluding para o pior; tallyRound serve para bestIds.
 export interface TallyResult {
   bestIds: string[];   // empatados no topo de "melhor"
-  worstIds: string[];  // empatados no fundo de "pior"
+  worstIds: string[];  // empatados no fundo de "pior" (sem excluir o melhor; veja worstIdsExcluding)
   needsTiebreak: boolean;
-  points: Record<string, number>; // delta da rodada; vazio se needsTiebreak
+  points: Record<string, number>; // delta (usa worstIds sem exclusao) da rodada; vazio se needsTiebreak
 }
 
 function countVotes(ids: (string | null)[]): Record<string, number> {

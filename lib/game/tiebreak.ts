@@ -17,7 +17,7 @@ export function resolveTiebreak(
   const max = Math.max(...Object.values(counts));
   const top = candidates.filter((id) => counts[id] === max);
   if (top.length === 1) return top[0];
-  // desempate final: menor (earliest) ou maior (latest) submittedAt; sem horario perde sempre
+  // desempate final: menor (earliest) ou maior (latest) submittedAt; quem nao tem horario fica em ultimo na preferencia (nunca vence o desempate final)
   if (prefer === "latest") {
     return top.reduce((best, id) =>
       (submittedAt[id] ?? -Infinity) > (submittedAt[best] ?? -Infinity) ? id : best,
