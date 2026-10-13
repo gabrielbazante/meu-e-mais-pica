@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
+import { InviteShare } from "@/components/ui/InviteShare";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import { startGame } from "@/app/actions/game";
 import { deleteRoom, leaveRoom } from "@/app/actions/room";
@@ -34,7 +35,8 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
       <Card className="text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-party-red">Código da sala</p>
         <p className="font-display text-5xl font-black tracking-widest">{room.code}</p>
-        <p className="mt-1 text-sm font-semibold opacity-70">Compartilhe com a galera</p>
+        <p className="mt-1 text-sm font-semibold opacity-70">Chama a galera:</p>
+        <InviteShare code={room.code} />
       </Card>
 
       <Card className="flex flex-col gap-2">
