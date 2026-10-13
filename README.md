@@ -8,8 +8,8 @@ Cada rodada sorteia um **tema** e uma **letra**. Todo mundo escreve a melhor res
 
 ## Como jogar
 
-1. Um jogador cria a sala e compartilha o código.
-2. Todos entram com o código.
+1. Um jogador cria a sala e convida a galera: pelo **código**, por **link** (botão do WhatsApp ou "Copiar link") ou por **QR Code** no lobby. O link e o QR Code já caem na tela de entrar na sala, só falta digitar o nome.
+2. Todos entram com o código ou pelo convite.
 3. Com 3+ jogadores, o dono inicia o jogo.
 4. Antes da primeira rodada aparece a **tela de regras**; o dono clica em "Bora!" para seguir.
 5. Rola uma **contagem 3-2-1** igual para todo mundo. O tema só aparece quando a rodada começa, então ninguém sai na frente.
@@ -50,6 +50,7 @@ Ao criar ou entrar em outra sala depois de uma partida (por exemplo, "Jogar de n
 - **Next.js** (App Router) + **TypeScript**
 - **Supabase** — banco de dados e realtime
 - **Tailwind CSS v4** — estilo chunky com sombras e bordas
+- **[qrcode.react](https://github.com/zpao/qrcode.react) 4.2.0** — QR Code do convite
 - **Fontes:** Fredoka (corpo) + Baloo 2 (títulos e botões)
 
 ---
