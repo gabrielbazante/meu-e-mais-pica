@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
+import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import { startGame } from "@/app/actions/game";
 import { deleteRoom, leaveRoom } from "@/app/actions/room";
 import { MIN_PLAYERS } from "@/lib/game/phase";
@@ -48,6 +49,7 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
 
       {isHost ? (
         <div className="flex flex-col gap-3">
+          <ManagePlayers roomId={room.id} players={players} meId={meId} hostId={room.host_id} />
           <Button disabled={!canStart || busy} onClick={async () => { setBusy(true); await startGame({ roomId: room.id, playerId: meId }); }}>
             {canStart ? "Começar 🔥" : `Faltam ${MIN_PLAYERS - players.length} jogador(es)`}
           </Button>
