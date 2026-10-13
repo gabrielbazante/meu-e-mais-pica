@@ -15,7 +15,8 @@ Cada rodada sorteia um **tema** e uma **letra**. Todo mundo escreve a melhor res
 5. Rola uma **contagem 3-2-1** igual para todo mundo. O tema só aparece quando a rodada começa, então ninguém sai na frente.
 6. Você tem **1 minuto** para responder. Não vale repetir palavra que já foi usada.
 7. Todos votam no **mais pica** e no **pior** (não dá para votar em si mesmo). Depois de votar, você vê a lista de quem já votou.
-8. **Empatou?** Rola desempate: primeiro para o melhor, depois para o pior, um de cada vez.
+8. **Empatou?** Rola desempate: primeiro para o melhor, depois para o pior, um de cada vez. Se o desempate do melhor continuar empatado, vence quem respondeu primeiro; no do pior, perde quem respondeu por último (rapidez protege dos dois lados).
+   - **Mais pica e pior nunca são a mesma pessoa:** o pior é apurado sem contar o vencedor do melhor. Se ninguém além dele recebeu voto de pior, a rodada fica sem pior.
 9. O **resultado** mostra o mais pica e o pior com a quantidade de votos de cada, e um ranking animado com os pontos que cada jogador fez na rodada.
 10. O dono segue para a próxima rodada ou encerra a partida. Quem acumular mais pontos vence 🏆
 
@@ -39,6 +40,8 @@ O total nunca fica abaixo de 0. Quem não respondeu não aparece como opção de
 ### Reconectando
 
 Caiu, fechou a aba ou perdeu o acesso? Entre com o **mesmo nome na mesma sala** e você recupera sua cadeira e seus pontos. Se for o dono, ele também recupera a coroa. Quem não está mais na sala vê o card "Entrar nesta sala".
+
+Ao criar ou entrar em outra sala depois de uma partida (por exemplo, "Jogar de novo"), você ganha uma **cadeira nova**, com zero pontos. A partida anterior continua intacta, com o pódio preservado.
 
 ---
 
@@ -105,8 +108,8 @@ O projeto está configurado para Vercel. Basta importar o repositório em vercel
 - Recuperar a cadeira pelo nome funciona mesmo com ela online; aceitável para um jogo entre amigos.
 - Jogador expulso pode voltar pelo card "Entrar nesta sala", começando do zero.
 - Não há tempo limite na votação: quem some trava a rodada até o dono expulsá-lo.
-- Num empate do pior que não se resolve, o desempate cai em quem respondeu primeiro. É a regra atual.
-- O mesmo jogador pode ser mais pica e pior na mesma rodada. É a regra atual.
+- Quem souber o código da sala e o nome do dono assume a cadeira do dono (aceito num jogo entre amigos).
+- Se o vencedor do melhor, já decidido, for expulso durante o desempate do pior, os +10 ficam sem dono.
 
 ## Saiba mais
 

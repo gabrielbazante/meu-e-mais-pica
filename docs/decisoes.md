@@ -32,7 +32,17 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Motivo:** diferença de relógio entre cliente e servidor pode fazer a primeira chamada chegar cedo, e a rodada ficaria parada.
 - **Impacto:** algumas chamadas extras, idempotentes.
 
-## Commits sem linha `Co-Authored-By`
-- **Decisão:** os commits desta entrega não levam `Co-Authored-By`.
-- **Motivo:** instrução do usuário no plano.
-- **Impacto:** nenhum no código; os commits não carregam atribuição de coautoria.
+## Cadeira nova por partida (`seatIdFor`)
+- **Decisão:** `createRoom` e `joinRoom` devolvem o id da cadeira; se o id do aparelho já ocupa outra sala, o servidor gera um id novo e o cliente o adota (`setPlayerId`). Linha já existente na mesma sala só atualiza nome e conexão.
+- **Motivo:** `players.id` é PK global; o insert colidia em `players_pkey` ("Jogar de novo") e o upsert movia a linha antiga carregando os pontos.
+- **Impacto:** a partida antiga fica intacta (pódio preservado) e cada partida começa com 0 pontos. Voltar à sala antiga cai no card "Entrar nesta sala".
+
+## Mais pica e pior nunca são a mesma pessoa
+- **Decisão:** o pior é apurado excluindo o vencedor do melhor (`worstIdsExcluding`), na apuração e no encadeamento melhor→pior; se ninguém mais recebeu voto de pior, não há pior. A tela de voto também impede a mesma resposta como melhor e pior.
+- **Motivo:** o mesmo jogador podia liderar os dois e a rodada perdia sentido.
+- **Impacto:** se o vencedor já decidido for expulso durante o desempate do pior, os +10 ficam sem dono.
+
+## Desempate do pior cai em quem respondeu por último
+- **Decisão:** `resolveTiebreak` recebe `prefer`; no desempate do pior, o empate persistente perde quem respondeu por último; no do melhor segue quem respondeu primeiro.
+- **Motivo:** antes o mais rápido era punido no pior.
+- **Impacto:** a rapidez protege dos dois lados.

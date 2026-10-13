@@ -20,6 +20,4 @@ Jogo de festa multiplayer (Next.js + Supabase). A branch `feat/ajustes-playtest`
 - QA manual na preview com 2+ abas (3+ jogadores para iniciar): contagem sincronizada, desempate duplo, expulsar (inclusive candidato de desempate), reconexão pelo nome (inclusive do dono), marcar repetida e ranking animado.
 
 ## Pendências para o usuário decidir
-- **Fallback do desempate do pior:** hoje, se o desempate continua empatado, cai em quem respondeu primeiro, o que pune o mais rápido. Manter ou trocar?
-- **Melhor também ser o pior:** hoje o mesmo jogador pode ser os dois na mesma rodada. Manter ou impedir?
-- **Bug pré-existente, fora do escopo da branch:** `createRoom` faz insert com o id do dispositivo, o que pode dar erro de chave duplicada em "Jogar de novo".
+Nenhuma no momento.
