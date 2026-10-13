@@ -1,28 +1,8 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-fredoka);
   --font-display: var(--font-baloo2);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @theme {
@@ -33,6 +13,13 @@ body {
   --color-party-purple: #a29bfe;
   --color-party-pink: #ff8fab;
   --color-party-blue: #74b9ff;
+
+  /* cores do logo (direção visual A2) */
+  --color-logo-pink: #ff1f8e;
+  --color-logo-purple: #8b2be2;
+  --color-logo-blue: #1e7be0;
+  --color-logo-gold: #ffc61a;
+  --color-cream: #fff6e6;
 }
 
 @utility border-3 {
@@ -45,10 +32,56 @@ body {
   box-shadow: 3px 3px 0 #1a1a2e;
 }
 
+/* Letras no estilo do logo: creme com contorno grosso e sombra dura. */
+@utility text-logo {
+  color: var(--color-cream);
+  -webkit-text-stroke: 2px var(--color-ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--color-ink);
+}
+
+/* "Adesivo" branco com contorno e sombra dura (inclinação fica com quem usa). */
+@utility sticker {
+  background: #ffffff;
+  border: 3px solid var(--color-ink);
+  border-radius: 1rem;
+  box-shadow: 4px 4px 0 var(--color-ink);
+  padding: 0.25rem 0.75rem;
+}
+
+/* Selo pequeno arredondado (tema, letra, pontuação). */
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #ffffff;
+  border: 2.5px solid var(--color-ink);
+  border-radius: 9999px;
+  box-shadow: 2px 2px 0 var(--color-ink);
+  padding: 0.125rem 0.625rem;
+  font-weight: 700;
+}
+
 body {
   background: var(--color-party-yellow);
   color: var(--color-ink);
+  font-family: var(--font-fredoka), ui-sans-serif, system-ui, sans-serif;
 }
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-15vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(115vh) rotate(540deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .confetti-fall {
+    animation: confetti-fall var(--dur, 2.4s) linear var(--delay, 0s) forwards;
+  }
 }
