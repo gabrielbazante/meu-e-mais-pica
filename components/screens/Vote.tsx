@@ -18,7 +18,11 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
   const myVote = votes.find((v) => v.voter_id === meId && v.is_tiebreak === tiebreak);
   const [best, setBest] = useState<string | null>(myVote?.best_id ?? null);
   const [worst, setWorst] = useState<string | null>(myVote?.worst_id ?? null);
-  const [sent, setSent] = useState(!!myVote);
+  // "enviado" é derivado do voto no servidor; pending cobre só a chamada em voo.
+  // (Estado congelado no mount ficava preso ao voto do desempate anterior no encadeamento best→worst.)
+  const [pending, setPending] = useState(false);
+  const sent = !!myVote || pending;
+  const [voiding, setVoiding] = useState(false);
 
   const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
   const joinIndex = colorIndexByJoin(players);
@@ -29,7 +33,9 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
 
   const dupFlags = possibleDuplicates(candidates.map((a) => ({ playerId: a.player_id, text: a.text })));
 
-  const canSend = tiebreak ? !!best : !!best && !!worst;
+  // escolhas que sairam da lista (anulada/expulso) nao contam
+  const isCandidate = (id: string | null) => !!id && candidates.some((a) => a.player_id === id);
+  const canSend = tiebreak ? isCandidate(best) : isCandidate(best) && isCandidate(worst);
   const header = tiebreak
     ? (kind === "worst" ? "💩 DESEMPATE — vote no PIOR" : "🔥 DESEMPATE — vote no MELHOR")
     : "Vote no mais pica e no pior";
@@ -62,8 +68,19 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
 
             {isHost && !tiebreak && !self && (
               <button
-                className="self-start rounded-lg border-3 border-ink bg-white px-2 py-1 text-xs font-bold"
-                onClick={() => voidAnswer({ roundId: round.id, hostId: meId, targetId: a.player_id })}
+                disabled={voiding}
+                className="self-start rounded-lg border-3 border-ink bg-white px-2 py-1 text-xs font-bold disabled:opacity-50"
+                onClick={async () => {
+                  if (!window.confirm(`Marcar a resposta de ${nameOf(a.player_id)} como repetida? Ela sai da votação.`)) return;
+                  setVoiding(true);
+                  try {
+                    await voidAnswer({ roundId: round.id, hostId: meId, targetId: a.player_id });
+                  } catch {
+                    // falha silenciosa: a resposta continua na lista e o dono pode tentar de novo
+                  } finally {
+                    setVoiding(false);
+                  }
+                }}
               >
                 marcar repetida
               </button>
@@ -88,11 +105,11 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
       {!sent ? (
         <Button disabled={!canSend}
           onClick={async () => {
-            setSent(true);
+            setPending(true);
             try {
               await castVote({ roundId: round.id, voterId: meId, bestId: best, worstId: tiebreak ? null : worst });
             } catch {
-              setSent(false);
+              setPending(false);
             }
           }}>
           Confirmar voto

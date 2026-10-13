@@ -1,10 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { submitAnswer, expireFill } from "@/app/actions/game";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import type { AnswerRow, PlayerRow, RoundRow, RoomRow } from "@/lib/supabase/database.types";
+
+// Intervalo entre tentativas de expireFill depois que o timer zerou. O servidor
+// decide pelo ends_at (clock skew pode tornar uma chamada adiantada um no-op);
+// a chamada é idempotente, então repetir até a fase mudar é seguro.
+const RETRY_MS = 1000;
 
 export function Fill({ round, room, players, answers, meId, isHost }: {
   round: RoundRow; room: RoomRow; players: PlayerRow[]; answers: AnswerRow[]; meId: string; isHost: boolean;
@@ -14,13 +19,34 @@ export function Fill({ round, room, players, answers, meId, isHost }: {
   const [sent, setSent] = useState(!!mine);
   const [left, setLeft] = useState(60);
   const [warn, setWarn] = useState("");
+  // Refs (não state) controlam as chamadas: não disparam re-render nem entram nas deps.
+  const inFlight = useRef(false);
+  const lastCallAt = useRef(Number.NEGATIVE_INFINITY);
 
   useEffect(() => {
     const end = round.ends_at ? new Date(round.ends_at).getTime() : Date.now() + 60000;
+    inFlight.current = false;
+    lastCallAt.current = Number.NEGATIVE_INFINITY;
+
+    const call = async () => {
+      inFlight.current = true;
+      lastCallAt.current = Date.now();
+      try {
+        await expireFill({ roundId: round.id });
+      } catch {
+        // Erro engolido de propósito: a próxima tentativa acontece no próximo ciclo.
+      } finally {
+        inFlight.current = false;
+      }
+    };
+
     const t = setInterval(() => {
       const s = Math.max(0, Math.round((end - Date.now()) / 1000));
       setLeft(s);
-      if (s === 0 && isHost) expireFill({ roundId: round.id }); // host garante o avanço
+      // host garante o avanço; repete até a fase mudar (desmontar limpa o intervalo)
+      if (s === 0 && isHost && !inFlight.current && Date.now() - lastCallAt.current >= RETRY_MS) {
+        void call();
+      }
     }, 250);
     return () => clearInterval(t);
   }, [round.id, round.ends_at, isHost]);
