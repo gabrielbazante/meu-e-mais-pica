@@ -47,10 +47,13 @@ export default function Home() {
           placeholder="Seu nome" value={name} maxLength={16}
           onChange={(e) => setName(e.target.value)}
         />
+        {!name.trim() && (
+          <p className="-mt-1 text-center text-sm font-semibold text-ink/60">Digite seu nome pra começar</p>
+        )}
 
         {mode === "create" ? (
           <>
-            <Button onClick={handleCreate} disabled={busy}>Criar sala</Button>
+            <Button onClick={handleCreate} disabled={busy || !name.trim()}>Criar sala</Button>
             <button
               type="button"
               onClick={() => { setMode("join"); setError(""); }}
@@ -66,7 +69,7 @@ export default function Home() {
               placeholder="CÓDIGO" value={code} maxLength={4}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
             />
-            <Button onClick={handleJoin} disabled={busy} className="!bg-party-teal">Entrar</Button>
+            <Button onClick={handleJoin} disabled={busy || !name.trim() || code.trim().length !== 4} className="!bg-party-teal">Entrar</Button>
             <button
               type="button"
               onClick={() => { setMode("create"); setError(""); }}
