@@ -1,4 +1,4 @@
-export type Phase = "preencher" | "votar" | "desempate" | "resultado";
+export type Phase = "regras" | "contagem" | "preencher" | "votar" | "desempate" | "resultado";
 export type RoomStatus = "lobby" | "playing" | "ended";
 
 export interface Player {

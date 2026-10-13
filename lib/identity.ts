@@ -8,3 +8,7 @@ export function getPlayerId(): string {
   }
   return id;
 }
+
+export function setPlayerId(id: string): void {
+  localStorage.setItem(KEY, id);
+}

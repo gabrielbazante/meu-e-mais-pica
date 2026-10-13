@@ -1,5 +1,6 @@
 export const MIN_PLAYERS = 3;
 export const FILL_SECONDS = 60;
+export const COUNTDOWN_SECONDS = 3;
 
 export function canStart(playerCount: number): boolean {
   return playerCount >= MIN_PLAYERS;

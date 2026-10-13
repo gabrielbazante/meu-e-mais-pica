@@ -1,25 +1,52 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { submitAnswer, expireFill } from "@/app/actions/game";
-import type { AnswerRow, PlayerRow, RoundRow } from "@/lib/supabase/database.types";
+import { ManagePlayers } from "@/components/ui/ManagePlayers";
+import type { AnswerRow, PlayerRow, RoundRow, RoomRow } from "@/lib/supabase/database.types";
 
-export function Fill({ round, players, answers, meId, isHost }: {
-  round: RoundRow; players: PlayerRow[]; answers: AnswerRow[]; meId: string; isHost: boolean;
+// Intervalo entre tentativas de expireFill depois que o timer zerou. O servidor
+// decide pelo ends_at (clock skew pode tornar uma chamada adiantada um no-op);
+// a chamada é idempotente, então repetir até a fase mudar é seguro.
+const RETRY_MS = 1000;
+
+export function Fill({ round, room, players, answers, meId, isHost }: {
+  round: RoundRow; room: RoomRow; players: PlayerRow[]; answers: AnswerRow[]; meId: string; isHost: boolean;
 }) {
   const mine = answers.find((a) => a.player_id === meId);
   const [text, setText] = useState(mine?.text ?? "");
   const [sent, setSent] = useState(!!mine);
   const [left, setLeft] = useState(60);
   const [warn, setWarn] = useState("");
+  // Refs (não state) controlam as chamadas: não disparam re-render nem entram nas deps.
+  const inFlight = useRef(false);
+  const lastCallAt = useRef(Number.NEGATIVE_INFINITY);
 
   useEffect(() => {
     const end = round.ends_at ? new Date(round.ends_at).getTime() : Date.now() + 60000;
+    inFlight.current = false;
+    lastCallAt.current = Number.NEGATIVE_INFINITY;
+
+    const call = async () => {
+      inFlight.current = true;
+      lastCallAt.current = Date.now();
+      try {
+        await expireFill({ roundId: round.id });
+      } catch {
+        // Erro engolido de propósito: a próxima tentativa acontece no próximo ciclo.
+      } finally {
+        inFlight.current = false;
+      }
+    };
+
     const t = setInterval(() => {
       const s = Math.max(0, Math.round((end - Date.now()) / 1000));
       setLeft(s);
-      if (s === 0 && isHost) expireFill({ roundId: round.id }); // host garante o avanço
+      // host garante o avanço; repete até a fase mudar (desmontar limpa o intervalo)
+      if (s === 0 && isHost && !inFlight.current && Date.now() - lastCallAt.current >= RETRY_MS) {
+        void call();
+      }
     }, 250);
     return () => clearInterval(t);
   }, [round.id, round.ends_at, isHost]);
@@ -28,14 +55,19 @@ export function Fill({ round, players, answers, meId, isHost }: {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 p-5">
+      {isHost && (
+        <div className="flex justify-end">
+          <ManagePlayers roomId={room.id} players={players} meId={meId} hostId={room.host_id} />
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <Card className="flex-1 !p-3 text-center">
           <p className="text-xs font-bold opacity-60">TEMA</p>
-          <p className="text-xl font-black text-party-teal">{round.theme}</p>
+          <p className="text-xl font-black text-party-teal">{round.theme ?? ""}</p>
         </Card>
         <div className="mx-3 rounded-xl border-3 border-ink bg-party-red px-4 py-2 text-center text-white shadow-chunkySm">
           <p className="text-xs font-bold">LETRA</p>
-          <p className="text-3xl font-black">{round.letter}</p>
+          <p className="text-3xl font-black">{round.letter ?? ""}</p>
         </div>
         <div className="rounded-full border-3 border-ink bg-white px-3 py-2 text-xl font-black">{left}s</div>
       </div>
@@ -44,7 +76,7 @@ export function Fill({ round, players, answers, meId, isHost }: {
         <input
           autoFocus disabled={sent}
           className="rounded-xl border-3 border-ink px-3 py-3 text-lg font-bold outline-none disabled:opacity-60"
-          placeholder={`Algo de "${round.theme}" com ${round.letter}…`}
+          placeholder={`Algo de "${round.theme ?? ""}" com ${round.letter ?? ""}…`}
           value={text} onChange={(e) => setText(e.target.value)}
         />
         <Button

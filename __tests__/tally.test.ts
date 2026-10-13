@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tallyRound } from "@/lib/game/tally";
+import { tallyRound, worstIdsExcluding } from "@/lib/game/tally";
 import type { Player, Vote } from "@/lib/game/types";
 
 const players: Player[] = [
@@ -51,5 +51,29 @@ describe("tallyRound", () => {
       { voterId: "c", bestId: "b", worstId: "a" },
     ]);
     expect(r.points).toEqual({ a: 0, b: 10, c: 2 });
+  });
+});
+
+describe("worstIdsExcluding", () => {
+  const v = (voterId: string, bestId: string | null, worstId: string | null): Vote => ({ voterId, bestId, worstId });
+
+  it("A lidera melhor e pior: pior vira o proximo", () => {
+    const votes = [v("a", "b", "c"), v("b", "a", "a"), v("c", "a", "a"), v("d", "a", "b")]; // a:2 piores, b:1, c:1
+    expect(worstIdsExcluding(votes, "a").sort()).toEqual(["b", "c"]);
+  });
+
+  it("todos os votos de pior no vencedor: vazio", () => {
+    const votes = [v("b", "a", "a"), v("c", "a", "a")];
+    expect(worstIdsExcluding(votes, "a")).toEqual([]);
+  });
+
+  it("excludeId null: comportamento normal", () => {
+    const votes = [v("b", "a", "a"), v("c", "a", "a"), v("d", "a", "b")];
+    expect(worstIdsExcluding(votes, null)).toEqual(["a"]);
+  });
+
+  it("empate apos excluir: 2 ids", () => {
+    const votes = [v("a", "b", "b"), v("b", "a", "c"), v("c", "a", "a"), v("d", "a", "a"), v("e", "a", "b"), v("f", "a", "c")];
+    expect(worstIdsExcluding(votes, "a").sort()).toEqual(["b", "c"]);
   });
 });

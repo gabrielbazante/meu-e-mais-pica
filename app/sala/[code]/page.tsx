@@ -1,36 +1,81 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import { useRoom } from "@/lib/useRoom";
-import { getPlayerId } from "@/lib/identity";
+import { getPlayerId, setPlayerId } from "@/lib/identity";
+import { joinRoom } from "@/app/actions/room";
 import { Lobby } from "@/components/screens/Lobby";
+import { Rules } from "@/components/screens/Rules";
+import { Countdown } from "@/components/screens/Countdown";
 import { Fill } from "@/components/screens/Fill";
 import { Vote } from "@/components/screens/Vote";
 import { Result } from "@/components/screens/Result";
 import { Podium } from "@/components/screens/Podium";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 export default function SalaPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
+  const upper = code.toUpperCase();
   const [meId, setMeId] = useState("");
   useEffect(() => setMeId(getPlayerId()), []);
-  const { room, players, round, answers, votes, loading } = useRoom(code.toUpperCase());
+  const { room, players, round, answers, votes, loading } = useRoom(upper);
 
   if (loading || !meId) return <Center>Carregando…</Center>;
   if (!room) return <Center>Sala não encontrada 😢</Center>;
 
   const isHost = room.host_id === meId;
   if (room.status === "ended") return <Podium players={players} />;
+
+  // caiu / foi expulso / perdeu o localStorage: oferece reentrar pelo nome
+  const inRoom = players.some((p) => p.id === meId);
+  if (!inRoom) return <JoinSeat code={upper} meId={meId} onJoined={setMeId} />;
+
   if (room.status === "lobby" || !round) return <Lobby room={room} players={players} meId={meId} />;
 
   switch (round.phase) {
-    case "preencher": return <Fill round={round} players={players} answers={answers} meId={meId} isHost={isHost} />;
+    case "regras": return <Rules round={round} meId={meId} isHost={isHost} />;
+    case "contagem": return <Countdown round={round} />;
+    case "preencher": return <Fill round={round} room={room} players={players} answers={answers} meId={meId} isHost={isHost} />;
     case "votar":
     case "desempate":
-      // key por fase: remonta o Vote ao passar de "votar" para "desempate"
-      // (zera o estado local de voto pra liberar a votação de desempate).
-      return <Vote key={`${round.id}:${round.phase}`} round={round} players={players} answers={answers} votes={votes} meId={meId} />;
+      // key inclui a fase e o tipo de desempate: remonta o Vote ao trocar best↔worst
+      return <Vote key={`${round.id}:${round.phase}:${round.tiebreak_kind ?? ""}`}
+        round={round} players={players} answers={answers} votes={votes} meId={meId} isHost={isHost} roomId={room.id} />;
     case "resultado": return <Result room={room} round={round} players={players} answers={answers} votes={votes} meId={meId} isHost={isHost} />;
     default: return <Center>…</Center>;
   }
+}
+
+function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoined: (id: string) => void }) {
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-5">
+      <Card className="flex w-full flex-col gap-3 text-center">
+        <p className="font-display text-2xl font-black">Entrar nesta sala</p>
+        <p className="text-sm font-semibold opacity-70">Sala {code}. Use o mesmo nome pra recuperar sua pontuação.</p>
+        <input
+          className="rounded-xl border-3 border-ink px-3 py-3 text-lg font-bold outline-none"
+          placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)}
+        />
+        <Button disabled={busy || !name.trim()}
+          onClick={async () => {
+            setBusy(true); setErr("");
+            try {
+              const res = await joinRoom({ code, playerId: meId, name: name.trim() });
+              // adota o id da cadeira (recuperada ou propria) e re-renderiza como esse jogador
+              setPlayerId(res.playerId);
+              onJoined(res.playerId);
+            }
+            catch (e) { setErr(e instanceof Error ? e.message : "Falha ao entrar"); setBusy(false); }
+          }}>
+          Entrar 🔥
+        </Button>
+        {err && <p className="font-bold text-party-red">{err}</p>}
+      </Card>
+    </main>
+  );
 }
 
 function Center({ children }: { children: React.ReactNode }) {
