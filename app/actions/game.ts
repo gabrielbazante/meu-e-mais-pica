@@ -45,8 +45,8 @@ export async function nextRound(input: { roomId: string; playerId: string }) {
   await assertHost(supabase, input.roomId, input.playerId);
   // R6: so avanca se a rodada atual esta em "resultado" (evita 2a rodada em duplo clique)
   const { data: room } = await supabase
-    .from("rooms").select("current_round_id").eq("id", input.roomId).maybeSingle();
-  if (!room?.current_round_id) return;
+    .from("rooms").select("current_round_id,status").eq("id", input.roomId).maybeSingle();
+  if (!room?.current_round_id || room.status === "ended") return;
   const { data: cur } = await supabase
     .from("rounds").select("phase").eq("id", room.current_round_id).maybeSingle();
   if (cur?.phase !== "resultado") return;
@@ -64,6 +64,9 @@ export async function submitAnswer(
 ): Promise<{ taken: boolean; word?: string }> {
   const supabase = createServerClient();
   const word = input.text.trim();
+  // R8: submit tardio (fase ja mudou) nao grava resposta votavel
+  const { data: cur } = await supabase.from("rounds").select("phase").eq("id", input.roundId).maybeSingle();
+  if (cur?.phase !== "preencher") return { taken: false };
   await supabase.from("answers").upsert(
     { round_id: input.roundId, player_id: input.playerId, text: word, submitted_at: new Date().toISOString() },
     { onConflict: "round_id,player_id" },

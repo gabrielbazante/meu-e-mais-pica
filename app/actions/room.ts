@@ -87,7 +87,7 @@ export async function leaveRoom(input: { roomId: string; playerId: string }) {
   if (error) throw new Error(error.message);
 }
 
-// Dono expulsa um jogador. Respostas/votos caem por ON DELETE CASCADE.
+// Dono expulsa um jogador. Respostas e votos DELE caem por ON DELETE CASCADE.
 // Re-checa a fase: a saida do expulso pode destravar preencher/votar.
 export async function kickPlayer(input: { roomId: string; hostId: string; targetId: string }) {
   const supabase = createServerClient();
@@ -95,6 +95,16 @@ export async function kickPlayer(input: { roomId: string; hostId: string; target
     .from("rooms").select("host_id,current_round_id").eq("id", input.roomId).maybeSingle();
   if (!room || room.host_id !== input.hostId) throw new Error("Só o dono da sala pode fazer isso");
   if (input.targetId === input.hostId) throw new Error("O dono não pode se expulsar");
+
+  // votes.best_id/worst_id referenciam players ON DELETE CASCADE: deletar o expulso
+  // apagaria tambem os votos de OUTROS jogadores que o escolheram, e a apuracao
+  // nunca fecharia. Zera so os alvos (a linha do votante fica, preservando a contagem).
+  const { data: rounds } = await supabase.from("rounds").select("id").eq("room_id", input.roomId);
+  const ids = (rounds ?? []).map((r) => r.id);
+  if (ids.length) {
+    await supabase.from("votes").update({ best_id: null }).in("round_id", ids).eq("best_id", input.targetId);
+    await supabase.from("votes").update({ worst_id: null }).in("round_id", ids).eq("worst_id", input.targetId);
+  }
 
   const { error } = await supabase.from("players")
     .delete().eq("id", input.targetId).eq("room_id", input.roomId);
