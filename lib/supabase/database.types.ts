@@ -17,10 +17,15 @@ export interface PlayerRow {
 export interface RoundRow {
   id: string;
   room_id: string;
-  theme: string;
-  letter: string;
-  phase: "preencher" | "votar" | "desempate" | "resultado";
+  theme: string | null;
+  letter: string | null;
+  phase: "regras" | "contagem" | "preencher" | "votar" | "desempate" | "resultado";
   tiebreak_candidates: string[];
+  tiebreak_kind: "best" | "worst" | null;
+  best_winner: string | null;
+  worst_loser: string | null;
+  round_scores: Record<string, number>;
+  starts_at: string | null;
   ends_at: string | null;
   started_at: string;
 }
@@ -29,6 +34,7 @@ export interface AnswerRow {
   round_id: string;
   player_id: string;
   text: string;
+  voided: boolean;
   submitted_at: string;
 }
 export interface VoteRow {
