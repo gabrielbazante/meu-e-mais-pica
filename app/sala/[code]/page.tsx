@@ -1,8 +1,8 @@
 "use client";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRoom } from "@/lib/useRoom";
 import { getPlayerId, setPlayerId } from "@/lib/identity";
-import { recoverFromStaleDeployment } from "@/lib/staleDeploy";
+import { isStaleDeploymentError, recoverFromStaleDeployment } from "@/lib/staleDeploy";
 import { joinRoom } from "@/app/actions/room";
 import { Lobby } from "@/components/screens/Lobby";
 import { Rules } from "@/components/screens/Rules";
@@ -51,6 +51,8 @@ function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoin
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); }, []);
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 p-5">
       <Card className="flex w-full flex-col gap-3 text-center">
@@ -70,7 +72,17 @@ function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoin
               onJoined(res.playerId);
             }
             catch (e) {
-              if (recoverFromStaleDeployment(e)) { setErr("O jogo foi atualizado, recarregando…"); return; }
+              if (isStaleDeploymentError(e)) {
+                if (recoverFromStaleDeployment(e)) {
+                  setErr("O jogo foi atualizado, recarregando…");
+                  reloadTimer.current = setTimeout(() => {
+                    setErr("Não recarregou? Atualize a página."); setBusy(false);
+                  }, 5000);
+                } else {
+                  setErr("O jogo foi atualizado. Atualize a página."); setBusy(false);
+                }
+                return;
+              }
               setErr(e instanceof Error ? e.message : "Falha ao entrar"); setBusy(false);
             }
           }}>

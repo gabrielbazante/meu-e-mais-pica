@@ -52,4 +52,19 @@ describe("recoverFromStaleDeployment", () => {
     expect(recoverFromStaleDeployment(new Error(REAL))).toBe(true);
     expect(reload).toHaveBeenCalledTimes(2);
   });
+  it("sem sessionStorage utilizavel nao recarrega e retorna false", () => {
+    const original = Object.getOwnPropertyDescriptor(window, "sessionStorage");
+    const broken = {
+      getItem: () => { throw new Error("blocked"); },
+      setItem: () => { throw new Error("blocked"); },
+    };
+    Object.defineProperty(window, "sessionStorage", { configurable: true, value: broken });
+    try {
+      expect(recoverFromStaleDeployment(new Error(REAL))).toBe(false);
+      expect(reload).not.toHaveBeenCalled();
+    } finally {
+      if (original) Object.defineProperty(window, "sessionStorage", original);
+      else delete (window as unknown as Record<string, unknown>).sessionStorage;
+    }
+  });
 });
