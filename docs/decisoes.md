@@ -46,3 +46,9 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Decisão:** `resolveTiebreak` recebe `prefer`; no desempate do pior, o empate persistente perde quem respondeu por último; no do melhor segue quem respondeu primeiro.
 - **Motivo:** antes o mais rápido era punido no pior.
 - **Impacto:** a rapidez protege dos dois lados.
+
+## Recarga automática ao detectar versão antiga (version skew)
+- **Decisão:** `lib/staleDeploy.ts` reconhece o erro "Server Action ... was not found on the server" e recarrega a página (no máximo uma vez a cada 30 s, controlado por `sessionStorage`). Os botões da home e o card "Entrar nesta sala" tratam o erro; `StaleDeployGuard` (no layout) cobre as demais actions via `unhandledrejection` e `error`.
+- **Motivo:** quem está com a aba aberta de um deploy anterior chama um ID de Server Action que o build novo não conhece (confirmado nos deploys de produção dos PRs #1 e #3). Ver "Version Skew" em `node_modules/next/dist/docs/01-app/02-guides/self-hosting.md`.
+- **Alternativa:** "Skew Protection" da Vercel (Settings → Advanced) mantém o deploy antigo atendendo clientes antigos; disponibilidade e custo dependem do plano. Não foi configurada.
+- **Impacto:** a ação que falhou não é reenviada; o usuário precisa repeti-la após a recarga. Se o `sessionStorage` estiver indisponível, não há recarga automática e o erro aparece.

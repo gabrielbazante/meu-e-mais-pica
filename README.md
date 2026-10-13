@@ -111,6 +111,7 @@ O projeto está configurado para Vercel. Basta importar o repositório em vercel
 - Não há tempo limite na votação: quem some trava a rodada até o dono expulsá-lo.
 - Quem souber o código da sala e o nome do dono assume a cadeira do dono (aceito num jogo entre amigos).
 - Se o vencedor do melhor, já decidido, for expulso durante o desempate do pior, os +10 ficam sem dono.
+- Após um deploy novo, quem estava com o app aberto é recarregado automaticamente na próxima ação (no máximo uma vez a cada 30 s). Dá para evitar o recarregamento ativando o "Skew Protection" da Vercel, conforme o plano.
 
 ## Saiba mais
 
