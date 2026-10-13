@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { recoverFromStaleDeployment } from "@/lib/staleDeploy";
 import { getPlayerId, setPlayerId } from "@/lib/identity";
 import { createRoom, joinRoom } from "@/app/actions/room";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +23,10 @@ export default function Home() {
       if (res.playerId !== getPlayerId()) setPlayerId(res.playerId); // adota a cadeira nova (partida anterior ocupa o id)
       const { code } = res;
       router.push(`/sala/${code}`);
-    } catch (e) { setError((e as Error).message); setBusy(false); }
+    } catch (e) {
+      if (recoverFromStaleDeployment(e)) { setError("O jogo foi atualizado, recarregando…"); return; }
+      setError((e as Error).message); setBusy(false);
+    }
   }
 
   async function handleJoin() {
@@ -33,7 +37,10 @@ export default function Home() {
       const res = await joinRoom({ code, playerId: getPlayerId(), name: name.trim() });
       if (res.playerId !== getPlayerId()) setPlayerId(res.playerId); // adota a cadeira recuperada
       router.push(`/sala/${res.code}`);
-    } catch (e) { setError((e as Error).message); setBusy(false); }
+    } catch (e) {
+      if (recoverFromStaleDeployment(e)) { setError("O jogo foi atualizado, recarregando…"); return; }
+      setError((e as Error).message); setBusy(false);
+    }
   }
 
   return (

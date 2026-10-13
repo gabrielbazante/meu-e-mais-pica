@@ -2,6 +2,7 @@
 import { use, useEffect, useState } from "react";
 import { useRoom } from "@/lib/useRoom";
 import { getPlayerId, setPlayerId } from "@/lib/identity";
+import { recoverFromStaleDeployment } from "@/lib/staleDeploy";
 import { joinRoom } from "@/app/actions/room";
 import { Lobby } from "@/components/screens/Lobby";
 import { Rules } from "@/components/screens/Rules";
@@ -68,7 +69,10 @@ function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoin
               setPlayerId(res.playerId);
               onJoined(res.playerId);
             }
-            catch (e) { setErr(e instanceof Error ? e.message : "Falha ao entrar"); setBusy(false); }
+            catch (e) {
+              if (recoverFromStaleDeployment(e)) { setErr("O jogo foi atualizado, recarregando…"); return; }
+              setErr(e instanceof Error ? e.message : "Falha ao entrar"); setBusy(false);
+            }
           }}>
           Entrar 🔥
         </Button>

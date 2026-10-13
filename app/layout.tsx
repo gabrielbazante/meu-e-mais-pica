@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka, Baloo_2 } from "next/font/google";
 import "./globals.css";
+import { StaleDeployGuard } from "@/components/StaleDeployGuard";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${fredoka.variable} ${baloo2.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <StaleDeployGuard />
+        {children}
+      </body>
     </html>
   );
 }
