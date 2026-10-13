@@ -19,3 +19,15 @@ export function resolveTiebreak(
     (submittedAt[id] ?? Infinity) < (submittedAt[best] ?? Infinity) ? id : best,
   );
 }
+
+// Filtra candidatos de desempate para quem ainda tem resposta valida na rodada
+// (nao-vazia e nao anulada). Um expulso perde a linha de answers (cascade) e sai daqui.
+export function aliveCandidates(
+  candidates: string[],
+  answers: { player_id: string; text: string; voided: boolean }[],
+): string[] {
+  const valid = new Set(
+    answers.filter((a) => a.text.trim() !== "" && !a.voided).map((a) => a.player_id),
+  );
+  return candidates.filter((id) => valid.has(id));
+}

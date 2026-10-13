@@ -3,7 +3,7 @@ import { drawRound } from "@/lib/game/draw";
 import { FILL_SECONDS, COUNTDOWN_SECONDS, fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
 import { roundDeltas } from "@/lib/game/scoring";
 import { tallyRound } from "@/lib/game/tally";
-import { resolveTiebreak } from "@/lib/game/tiebreak";
+import { aliveCandidates, resolveTiebreak } from "@/lib/game/tiebreak";
 import type { Player, Vote } from "@/lib/game/types";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
@@ -123,23 +123,23 @@ export async function maybeTally(supabase: SB, roundId: string) {
   if (round.phase !== "votar" && round.phase !== "desempate") return;
   const isTiebreak = round.phase === "desempate";
 
+  const { data: answerData } = await supabase
+    .from("answers").select("player_id,text,voided,submitted_at").eq("round_id", roundId);
+  const answerRows = answerData ?? [];
+  const voided = new Set(answerRows.filter((a) => a.voided).map((a) => a.player_id));
+  const nullifyVoided = (id: string | null) => (id && voided.has(id) ? null : id);
+  // so quem ainda tem resposta valida (expulsos perdem a linha por cascade)
+  const alive = (ids: string[]) => aliveCandidates(ids, answerRows);
+
   // Guarda: com menos de 2 candidatos votaveis (ex.: anulacoes durante "votar") ninguem
   // consegue completar a votacao (nao se vota em si mesmo); finaliza direto.
   if (!isTiebreak) {
-    const { data: candRows } = await supabase
-      .from("answers").select("player_id,text,voided").eq("round_id", roundId);
-    const votable = (candRows ?? []).filter((a) => a.text.trim() !== "" && !a.voided);
+    const votable = answerRows.filter((a) => a.text.trim() !== "" && !a.voided);
     if (votable.length < 2) {
       await finalizeRound(supabase, round, votable[0]?.player_id ?? null, null);
       return;
     }
   }
-
-  const { count: playerCount } = await supabase
-    .from("players").select("id", { count: "exact", head: true }).eq("room_id", round.room_id);
-  const { data: voteRows } = await supabase
-    .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", isTiebreak);
-  if (!votePhaseComplete(voteRows?.length ?? 0, playerCount ?? 0)) return;
 
   const { data: playerRows } = await supabase
     .from("players").select("id,name,total_points").eq("room_id", round.room_id);
@@ -147,10 +147,47 @@ export async function maybeTally(supabase: SB, roundId: string) {
     id: p.id, name: p.name, totalPoints: p.total_points,
   }));
 
-  const { data: answerRows } = await supabase
-    .from("answers").select("player_id,voided,submitted_at").eq("round_id", roundId);
-  const voided = new Set((answerRows ?? []).filter((a) => a.voided).map((a) => a.player_id));
-  const nullifyVoided = (id: string | null) => (id && voided.has(id) ? null : id);
+  // recomputa o pior a partir dos votos principais (usado so no desempate)
+  const baseWorstIds = async () => {
+    const { data: origVoteRows } = await supabase
+      .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", false);
+    const origVotes: Vote[] = (origVoteRows ?? []).map((v) => ({
+      voterId: v.voter_id, bestId: nullifyVoided(v.best_id), worstId: nullifyVoided(v.worst_id),
+    }));
+    return alive(tallyRound(players, origVotes).worstIds);
+  };
+
+  // Melhor ja resolvido no desempate: encadeia para o desempate do pior (se empatar)
+  // ou finaliza. Claim primeiro: so quem vencer a transicao best→worst apaga os votos.
+  const afterBestResolved = async (bestId: string | null) => {
+    const worstIds = await baseWorstIds();
+    if (worstIds.length > 1) {
+      const { data: claimed } = await supabase.from("rounds").update({
+        tiebreak_kind: "worst", tiebreak_candidates: worstIds, best_winner: bestId,
+      }).eq("id", roundId).eq("phase", "desempate").eq("tiebreak_kind", "best").select("id");
+      if (claimed && claimed.length > 0) {
+        await supabase.from("votes").delete().eq("round_id", roundId).eq("is_tiebreak", true);
+      }
+      return;
+    }
+    await finalizeRound(supabase, round, bestId, worstIds[0] ?? null);
+  };
+
+  // Desempate com menos de 2 candidatos vivos (ex.: um empatado foi expulso): o restante
+  // nao pode votar em si mesmo e a votacao nunca fecharia; resolve direto.
+  if (isTiebreak) {
+    const cands = alive(round.tiebreak_candidates);
+    if (cands.length < 2) {
+      const resolved = cands[0] ?? null;
+      if (round.tiebreak_kind === "best") await afterBestResolved(resolved);
+      else await finalizeRound(supabase, round, round.best_winner, resolved);
+      return;
+    }
+  }
+
+  const { data: voteRows } = await supabase
+    .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", isTiebreak);
+  if (!votePhaseComplete(voteRows?.length ?? 0, players.length)) return;
 
   // --- votos principais ---
   if (!isTiebreak) {
@@ -178,34 +215,15 @@ export async function maybeTally(supabase: SB, roundId: string) {
 
   // --- votos de desempate (campo best_id = alvo escolhido) ---
   const submittedAt: Record<string, number> = {};
-  for (const a of answerRows ?? []) submittedAt[a.player_id] = new Date(a.submitted_at).getTime();
+  for (const a of answerRows) submittedAt[a.player_id] = new Date(a.submitted_at).getTime();
   const tbBest = (voteRows ?? []).map((v) => nullifyVoided(v.best_id));
-
-  // recomputa o pior a partir dos votos principais
-  const { data: origVoteRows } = await supabase
-    .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", false);
-  const origVotes: Vote[] = (origVoteRows ?? []).map((v) => ({
-    voterId: v.voter_id, bestId: nullifyVoided(v.best_id), worstId: nullifyVoided(v.worst_id),
-  }));
-  const base = tallyRound(players, origVotes);
+  const cands = alive(round.tiebreak_candidates);
+  const resolved = resolveTiebreak(cands, tbBest, submittedAt);
 
   if (round.tiebreak_kind === "best") {
-    const winner = resolveTiebreak(round.tiebreak_candidates, tbBest, submittedAt);
-    if (base.worstIds.length > 1) {
-      // claim primeiro: so quem vencer a transicao best→worst apaga os votos de desempate
-      const { data: claimed } = await supabase.from("rounds").update({
-        tiebreak_kind: "worst", tiebreak_candidates: base.worstIds, best_winner: winner,
-      }).eq("id", roundId).eq("phase", "desempate").eq("tiebreak_kind", "best").select("id");
-      if (claimed && claimed.length > 0) {
-        await supabase.from("votes").delete().eq("round_id", roundId).eq("is_tiebreak", true);
-      }
-      return;
-    }
-    await finalizeRound(supabase, round, winner, base.worstIds[0] ?? null);
+    await afterBestResolved(resolved);
     return;
   }
-
   // tiebreak_kind === "worst"
-  const worstLoser = resolveTiebreak(round.tiebreak_candidates, tbBest, submittedAt);
-  await finalizeRound(supabase, round, round.best_winner, worstLoser);
+  await finalizeRound(supabase, round, round.best_winner, resolved);
 }

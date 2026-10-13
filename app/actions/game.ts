@@ -88,9 +88,11 @@ export async function submitAnswer(
   return { taken: false };
 }
 
+// O cliente avisa que o timer zerou, mas quem decide é o servidor pelo ends_at
+// (timeUp=false): uma chamada adiantada (clock skew) é no-op e o cliente repete.
 export async function expireFill(input: { roundId: string }) {
   const supabase = createServerClient();
-  await maybeAdvanceFromFill(supabase, input.roundId, true);
+  await maybeAdvanceFromFill(supabase, input.roundId, false);
 }
 
 export async function castVote(input: {
@@ -115,11 +117,11 @@ export async function voidAnswer(input: { roundId: string; hostId: string; targe
   const supabase = createServerClient();
   const { data: round } = await supabase
     .from("rounds").select("room_id,phase").eq("id", input.roundId).single();
-  if (!round) return;
+  // so durante a votacao principal (a UI so oferece o botao ali)
+  if (!round || round.phase !== "votar") return;
   await assertHost(supabase, round.room_id, input.hostId);
   await supabase.from("answers").update({ voided: true })
     .eq("round_id", input.roundId).eq("player_id", input.targetId);
-  // revalida avanco/apuracao (voto ja dado que apontava pro anulado é ignorado no tally)
-  await maybeAdvanceFromFill(supabase, input.roundId, false);
+  // revalida apuracao (voto ja dado que apontava pro anulado é ignorado no tally)
   await maybeTally(supabase, input.roundId);
 }
