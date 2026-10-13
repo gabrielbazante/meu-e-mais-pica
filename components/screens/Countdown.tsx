@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { beginRound } from "@/app/actions/game";
+import { Flame } from "@/components/icons";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
 // Intervalo entre tentativas de beginRound quando a contagem chegou a zero.
@@ -48,8 +49,10 @@ export function Countdown({ round }: { round: RoundRow }) {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="text-xl font-black opacity-70">Preparando…</p>
-      <p className="font-display text-[8rem] font-black leading-none text-party-red">{left > 0 ? left : "🔥"}</p>
+      <p className="font-display text-xl font-extrabold opacity-70">Preparando…</p>
+      {left > 0
+        ? <p className="text-logo font-display text-[8rem] font-extrabold leading-none">{left}</p>
+        : <Flame size={128} title="Valendo!" />}
     </main>
   );
 }
