@@ -77,6 +77,7 @@ As migrations ficam em `supabase/migrations/`:
 
 - `0001_init.sql`: tabelas e configuração inicial.
 - `0002_ajustes_playtest.sql`: colunas novas do pós-playtest (contagem, desempate do pior, pontos da rodada, resposta repetida). Tema e letra passam a poder ser nulos.
+- `0003_keepalive.sql`: tabela `keepalive_log` usada pelo keep-alive diário (veja abaixo). Rode no **SQL editor** do Supabase; não é aplicada automaticamente.
 
 Para aplicar, escolha uma opção:
 
@@ -85,6 +86,14 @@ npx supabase db push
 ```
 
 ou copie o conteúdo de cada arquivo e rode, em ordem, no **SQL editor** do painel do Supabase.
+
+### Keep-alive do Supabase
+
+O plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem atividade. Para evitar isso, um Vercel Cron chama `GET /api/cron/keepalive` todo dia às **09:00 UTC** (configurado em `vercel.json`), e a rota insere uma linha em `keepalive_log` e apaga as com mais de 30 dias.
+
+- Rode a migração `0003_keepalive.sql` uma vez; sem ela a rota responde 500.
+- Em produção, a Vercel precisa da variável `CRON_SECRET` (já criada no projeto). A Vercel a envia como `Authorization: Bearer ...` e a rota recusa (401) qualquer outra chamada.
+- Para conferir, rode no SQL editor: `select * from keepalive_log order by created_at desc limit 5;`. Deve haver uma linha nova por dia.
 
 ---
 
