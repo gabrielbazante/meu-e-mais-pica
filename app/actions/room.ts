@@ -10,8 +10,17 @@ function genCode(): string {
   return code;
 }
 
-export async function createRoom(input: { hostId: string; name: string }) {
+// players.id e PK global e o aparelho reusa o mesmo id entre partidas. Se esse id ja
+// ocupa uma cadeira em OUTRA sala, devolve um id novo (o cliente adota); senao o proprio.
+async function seatIdFor(supabase: ReturnType<typeof createServerClient>, deviceId: string, roomId: string | null) {
+  const { data } = await supabase.from("players").select("room_id").eq("id", deviceId).maybeSingle();
+  if (data && data.room_id !== roomId) return crypto.randomUUID();
+  return deviceId;
+}
+
+export async function createRoom(input: { hostId: string; name: string }): Promise<{ code: string; playerId: string }> {
   const supabase = createServerClient();
+  const seatId = await seatIdFor(supabase, input.hostId, null);
   let code = genCode();
   for (let i = 0; i < 5; i++) {
     const { data } = await supabase.from("rooms").select("id").eq("code", code).maybeSingle();
@@ -21,17 +30,17 @@ export async function createRoom(input: { hostId: string; name: string }) {
 
   const { data: room, error } = await supabase
     .from("rooms")
-    .insert({ code, host_id: input.hostId, status: "lobby" })
+    .insert({ code, host_id: seatId, status: "lobby" })
     .select()
     .single();
   if (error || !room) throw new Error(error?.message ?? "Falha ao criar sala");
 
   const { error: pErr } = await supabase
     .from("players")
-    .insert({ id: input.hostId, room_id: room.id, name: input.name });
+    .insert({ id: seatId, room_id: room.id, name: input.name, total_points: 0 });
   if (pErr) throw new Error(pErr.message);
 
-  return { code };
+  return { code, playerId: seatId };
 }
 
 export async function joinRoom(
@@ -58,14 +67,18 @@ export async function joinRoom(
     return { code, playerId: target.id };
   }
 
-  const { error } = await supabase
-    .from("players")
-    .upsert(
-      { id: input.playerId, room_id: room.id, name: input.name, connected: true },
-      { onConflict: "id" },
-    );
+  // Caminho normal: cadeira nova. Se o id do aparelho ja esta em outra sala, usa um id novo
+  // (pontos e pódio da partida antiga ficam intactos). Linha ja existente NESTA sala so
+  // atualiza nome/conexao, preservando os pontos.
+  const seatId = await seatIdFor(supabase, input.playerId, room.id);
+  const mine = (existing ?? []).some((p) => p.id === seatId);
+  const { error } = mine
+    ? await supabase.from("players").update({ name: input.name, connected: true }).eq("id", seatId)
+    : await supabase.from("players").insert({
+        id: seatId, room_id: room.id, name: input.name, connected: true, total_points: 0,
+      });
   if (error) throw new Error(error.message);
-  return { code, playerId: input.playerId };
+  return { code, playerId: seatId };
 }
 
 export async function deleteRoom(input: { roomId: string; hostId: string }) {

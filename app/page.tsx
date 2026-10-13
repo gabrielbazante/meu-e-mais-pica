@@ -18,7 +18,9 @@ export default function Home() {
     if (!name.trim()) return setError("Digite seu nome");
     setBusy(true); setError("");
     try {
-      const { code } = await createRoom({ hostId: getPlayerId(), name: name.trim() });
+      const res = await createRoom({ hostId: getPlayerId(), name: name.trim() });
+      if (res.playerId !== getPlayerId()) setPlayerId(res.playerId); // adota a cadeira nova (partida anterior ocupa o id)
+      const { code } = res;
       router.push(`/sala/${code}`);
     } catch (e) { setError((e as Error).message); setBusy(false); }
   }
