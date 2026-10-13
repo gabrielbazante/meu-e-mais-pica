@@ -6,6 +6,7 @@ import { getPlayerId, setPlayerId } from "@/lib/identity";
 import { createRoom, joinRoom } from "@/app/actions/room";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Alert, ArrowLeft, Play } from "@/components/icons";
 
 export default function Home() {
   const router = useRouter();
@@ -77,7 +78,7 @@ export default function Home() {
 
         {mode === "create" ? (
           <>
-            <Button onClick={handleCreate} disabled={busy || !name.trim()}>Criar sala</Button>
+            <Button onClick={handleCreate} disabled={busy || !name.trim()} icon={<Play size={20} />}>Criar sala</Button>
             <button
               type="button"
               onClick={() => { setMode("join"); setError(""); }}
@@ -93,18 +94,24 @@ export default function Home() {
               placeholder="CÓDIGO" value={code} maxLength={4}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
             />
-            <Button onClick={handleJoin} disabled={busy || !name.trim() || code.trim().length !== 4} className="!bg-party-teal">Entrar</Button>
+            <Button onClick={handleJoin} disabled={busy || !name.trim() || code.trim().length !== 4} className="!bg-party-teal" icon={<Play size={20} />}>Entrar</Button>
             <button
               type="button"
               onClick={() => { setMode("create"); setError(""); }}
-              className="mt-1 text-center font-bold text-ink/70 underline underline-offset-4"
+              className="mt-1 inline-flex items-center justify-center gap-1.5 text-center font-bold text-ink/70 underline underline-offset-4"
             >
-              ← Quero criar uma sala
+              <ArrowLeft size={18} />
+              Quero criar uma sala
             </button>
           </>
         )}
       </Card>
-      {error && <p className="text-center font-bold text-ink">{error}</p>}
+      {error && (
+        <p className="flex items-center justify-center gap-2 text-center font-bold text-ink">
+          <Alert size={20} />
+          {error}
+        </p>
+      )}
     </main>
   );
 }

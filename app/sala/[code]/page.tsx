@@ -13,6 +13,7 @@ import { Result } from "@/components/screens/Result";
 import { Podium } from "@/components/screens/Podium";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Alert, Play, Sad } from "@/components/icons";
 
 export default function SalaPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -22,7 +23,7 @@ export default function SalaPage({ params }: { params: Promise<{ code: string }>
   const { room, players, round, answers, votes, loading } = useRoom(upper);
 
   if (loading || !meId) return <Center>Carregando…</Center>;
-  if (!room) return <Center>Sala não encontrada 😢</Center>;
+  if (!room) return <Center><Sad size={64} />Sala não encontrada</Center>;
 
   const isHost = room.host_id === meId;
   if (room.status === "ended") return <Podium players={players} />;
@@ -62,7 +63,7 @@ function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoin
           className="rounded-xl border-3 border-ink px-3 py-3 text-lg font-bold outline-none"
           placeholder="Seu nome" value={name} onChange={(e) => setName(e.target.value)}
         />
-        <Button disabled={busy || !name.trim()}
+        <Button disabled={busy || !name.trim()} icon={<Play size={20} />}
           onClick={async () => {
             setBusy(true); setErr("");
             try {
@@ -86,14 +87,23 @@ function JoinSeat({ code, meId, onJoined }: { code: string; meId: string; onJoin
               setErr(e instanceof Error ? e.message : "Falha ao entrar"); setBusy(false);
             }
           }}>
-          Entrar 🔥
+          Entrar
         </Button>
-        {err && <p className="font-bold text-party-red">{err}</p>}
+        {err && (
+          <p className="flex items-center justify-center gap-2 font-bold text-party-red">
+            <Alert size={20} />
+            {err}
+          </p>
+        )}
       </Card>
     </main>
   );
 }
 
 function Center({ children }: { children: React.ReactNode }) {
-  return <main className="flex min-h-screen items-center justify-center p-6 text-center text-xl font-black">{children}</main>;
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center font-display text-xl font-extrabold">
+      {children}
+    </main>
+  );
 }
