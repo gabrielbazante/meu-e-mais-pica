@@ -77,6 +77,16 @@ export async function deleteRoom(input: { roomId: string; hostId: string }) {
   if (error) throw new Error(error.message);
 }
 
+// O Realtime nao entrega DELETE em assinaturas com filtro (o old record so traz a PK,
+// entao `room_id=eq.X` nunca casa). Apos remover um jogador, reescreve o host_id atual
+// (UPDATE sem efeito) para disparar a assinatura de `rooms` e todos os clientes
+// recarregarem. Se a sala nao existe mais, nao faz nada.
+async function touchRoom(supabase: ReturnType<typeof createServerClient>, roomId: string) {
+  const { data: room } = await supabase.from("rooms").select("host_id").eq("id", roomId).maybeSingle();
+  if (!room) return;
+  await supabase.from("rooms").update({ host_id: room.host_id }).eq("id", roomId);
+}
+
 export async function leaveRoom(input: { roomId: string; playerId: string }) {
   const supabase = createServerClient();
   const { error } = await supabase
@@ -85,6 +95,7 @@ export async function leaveRoom(input: { roomId: string; playerId: string }) {
     .eq("id", input.playerId)
     .eq("room_id", input.roomId);
   if (error) throw new Error(error.message);
+  await touchRoom(supabase, input.roomId);
 }
 
 // Dono expulsa um jogador. Respostas e votos DELE caem por ON DELETE CASCADE.
@@ -109,6 +120,7 @@ export async function kickPlayer(input: { roomId: string; hostId: string; target
   const { error } = await supabase.from("players")
     .delete().eq("id", input.targetId).eq("room_id", input.roomId);
   if (error) throw new Error(error.message);
+  await touchRoom(supabase, input.roomId);
 
   if (room.current_round_id) {
     await maybeAdvanceFromFill(supabase, room.current_round_id, false);

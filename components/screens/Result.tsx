@@ -41,12 +41,12 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
           <div>
             <p className="text-lg font-bold opacity-70">O mais pica 🔥</p>
             <p className="font-display text-3xl font-black">{nameOf(bestId)}</p>
-            <Card className="!bg-party-teal mt-1 text-white">{textOf(bestId)} <span className="opacity-80">({countFor(bestId, "best_id")} votos)</span></Card>
+            <Card className="!bg-party-teal mt-1 text-white">{textOf(bestId)} <span className="opacity-80">({countFor(bestId, "best_id")} {countFor(bestId, "best_id") === 1 ? "voto" : "votos"})</span></Card>
           </div>
           <div>
             <p className="text-lg font-bold opacity-70">O pior 💩</p>
             <p className="font-display text-2xl font-black">{nameOf(worstId)}</p>
-            <Card className="!bg-party-red mt-1 text-white">{textOf(worstId)} <span className="opacity-80">({countFor(worstId, "worst_id")} votos)</span></Card>
+            <Card className="!bg-party-red mt-1 text-white">{textOf(worstId)} <span className="opacity-80">({countFor(worstId, "worst_id")} {countFor(worstId, "worst_id") === 1 ? "voto" : "votos"})</span></Card>
           </div>
         </div>
       ) : (
