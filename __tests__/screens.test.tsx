@@ -22,3 +22,16 @@ describe("VotersList", () => {
     expect(html).not.toContain("✓");
   });
 });
+
+describe("Ranking", () => {
+  it("usa medalhas SVG para o top 3 e 'Nº' do 4º em diante, sem emoji", async () => {
+    const { Ranking } = await import("@/components/screens/Ranking");
+    const html = renderToStaticMarkup(
+      <Ranking players={[player("1", "Ana", 30), player("2", "Bia", 20), player("3", "Caio", 10), player("4", "Duda", 5)]} />,
+    );
+    expect(html).toContain('aria-label="1º lugar"');
+    expect(html).toContain('aria-label="3º lugar"');
+    expect(html).toContain("4º");
+    expect(html).not.toMatch(/[\u{1F947}-\u{1F949}]/u);
+  });
+});

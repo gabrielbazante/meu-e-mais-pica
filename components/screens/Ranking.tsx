@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
+import { Medal } from "@/components/icons";
 import type { PlayerRow } from "@/lib/supabase/database.types";
-
-const MEDALS = ["🥇", "🥈", "🥉"];
 
 export function Ranking({ players, deltas }: { players: PlayerRow[]; deltas?: Record<string, number> }) {
   // comeca na ordem ANTIGA (total - delta), depois troca pros totais novos → anima FLIP
@@ -57,9 +56,13 @@ export function Ranking({ players, deltas }: { players: PlayerRow[]; deltas?: Re
           <div key={p.id}
             ref={(el) => { if (el) refs.current.set(p.id, el); }}
             className="flex items-center gap-3 rounded-2xl border-3 border-ink bg-white px-4 py-3 shadow-chunky">
-            <span className="font-display w-8 text-center text-xl font-black">{MEDALS[i] ?? `${i + 1}º`}</span>
+            <span className="flex w-9 flex-none justify-center">
+              {i < 3
+                ? <Medal rank={(i + 1) as 1 | 2 | 3} size={34} title={`${i + 1}º lugar`} />
+                : <span className="font-display text-xl font-extrabold">{i + 1}º</span>}
+            </span>
             <BlockAvatar seed={p.id} size={40} colorIndex={joinIndex.get(p.id)} />
-            <span className="flex-1 font-extrabold">{p.name}</span>
+            <span className="min-w-0 flex-1 break-words font-extrabold">{p.name}</span>
             {deltas && (
               <span className={"font-display text-sm font-black " + (d > 0 ? "text-party-teal" : d < 0 ? "text-party-red" : "opacity-40")}>
                 {d > 0 ? `+${d}` : d}
