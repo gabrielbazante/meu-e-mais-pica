@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getPlayerId } from "@/lib/identity";
+import { getPlayerId, setPlayerId } from "@/lib/identity";
 import { createRoom, joinRoom } from "@/app/actions/room";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -29,6 +29,7 @@ export default function Home() {
     setBusy(true); setError("");
     try {
       const res = await joinRoom({ code, playerId: getPlayerId(), name: name.trim() });
+      if (res.playerId !== getPlayerId()) setPlayerId(res.playerId); // adota a cadeira recuperada
       router.push(`/sala/${res.code}`);
     } catch (e) { setError((e as Error).message); setBusy(false); }
   }
