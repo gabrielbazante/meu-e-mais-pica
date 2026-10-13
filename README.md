@@ -94,6 +94,7 @@ O plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem atividade
 - Rode a migração `0003_keepalive.sql` uma vez; sem ela a rota responde 500.
 - Em produção, a Vercel precisa da variável `CRON_SECRET` (já criada no projeto). A Vercel a envia como `Authorization: Bearer ...` e a rota recusa (401) qualquer outra chamada.
 - Para conferir, rode no SQL editor: `select * from keepalive_log order by created_at desc limit 5;`. Deve haver uma linha nova por dia.
+- Na Vercel (plano Hobby) o cron roda em algum momento dentro da hora das 09:00 UTC, não no minuto exato. Se suspeitar que o keep-alive não está rodando, veja Vercel → projeto → Settings → Cron Jobs (logs e botão "Run").
 
 ---
 

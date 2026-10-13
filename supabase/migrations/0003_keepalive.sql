@@ -11,9 +11,16 @@ create table if not exists keepalive_log (
 
 alter table keepalive_log enable row level security;
 
-create policy "keepalive insert" on keepalive_log for insert with check (true);
+-- drop + create para a migração poder ser rodada de novo
+drop policy if exists "keepalive insert" on keepalive_log;
+create policy "keepalive insert" on keepalive_log for insert
+  with check (source = 'vercel-cron' and created_at <= now());
+
+drop policy if exists "keepalive select" on keepalive_log;
 create policy "keepalive select" on keepalive_log for select using (true);
+
 -- só linhas antigas podem ser apagadas
+drop policy if exists "keepalive delete old" on keepalive_log;
 create policy "keepalive delete old" on keepalive_log for delete
   using (created_at < now() - interval '30 days');
 

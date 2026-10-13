@@ -17,15 +17,24 @@ export async function GET(request: Request) {
     return Response.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const supabase = createServerClient();
-  const { error } = await supabase.from("keepalive_log").insert({});
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  try {
+    const supabase = createServerClient();
+    const { error } = await supabase.from("keepalive_log").insert({});
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    // Limpeza das linhas antigas; falha aqui não invalida o keep-alive.
+    const limite = new Date(Date.now() - RETENCAO_DIAS * 86_400_000).toISOString();
+    const { error: erroLimpeza } = await supabase
+      .from("keepalive_log")
+      .delete()
+      .lt("created_at", limite);
+    if (erroLimpeza) console.error("keepalive cleanup", erroLimpeza.message);
+
+    return Response.json({ ok: true, at: new Date().toISOString() });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "erro inesperado";
+    return Response.json({ error: message }, { status: 500 });
   }
-
-  // Limpeza das linhas antigas; falha aqui não invalida o keep-alive.
-  const limite = new Date(Date.now() - RETENCAO_DIAS * 86_400_000).toISOString();
-  await supabase.from("keepalive_log").delete().lt("created_at", limite);
-
-  return Response.json({ ok: true, at: new Date().toISOString() });
 }

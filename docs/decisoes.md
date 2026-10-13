@@ -56,5 +56,6 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 ## Keep-alive do Supabase por Vercel Cron
 - **Decisão:** um Vercel Cron diário (`vercel.json`, 09:00 UTC) chama `/api/cron/keepalive`, que insere uma linha em `keepalive_log` e apaga as de mais de 30 dias. Autenticado por `CRON_SECRET` (comparação em tempo constante em `lib/keepalive.ts`).
 - **Motivo:** o plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem atividade.
-- **Alternativas descartadas:** `pg_cron` roda dentro do banco e não conta como atividade para o pause; GitHub Actions desativa workflows agendados em repositório inativo.
+- **Alternativas descartadas:** `pg_cron`: jobs internos do banco podem não contar como atividade do projeto; GitHub Actions desativa workflows agendados em repositório inativo.
 - **Impacto:** exige rodar a migração `0003_keepalive.sql` manualmente. A tabela segue o padrão de RLS do projeto (anon key): insert e select livres, delete só de linhas com mais de 30 dias. `vercel.json` em vez de `vercel.ts` para não adicionar dependência.
+- **Risco aceito:** a anon key consegue inserir linhas em `keepalive_log` (limitado pela policy: `source = 'vercel-cron'` e `created_at <= now()`), e qualquer um pode lê-las. Coerente com o restante do schema, que também usa a anon key com RLS aberta.
