@@ -1,10 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { drawRound } from "@/lib/game/draw";
-import { FILL_SECONDS, COUNTDOWN_SECONDS } from "@/lib/game/phase";
+import { FILL_SECONDS, COUNTDOWN_SECONDS, fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
 import { roundDeltas } from "@/lib/game/scoring";
 import { tallyRound } from "@/lib/game/tally";
 import { resolveTiebreak } from "@/lib/game/tiebreak";
-import { fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
 import type { Player, Vote } from "@/lib/game/types";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
@@ -54,7 +53,7 @@ export async function finalizeRound(
   const { data: playerRows } = await supabase
     .from("players").select("id,total_points").eq("room_id", round.room_id);
   const { data: answerRows } = await supabase
-    .from("answers").select("player_id,text").eq("round_id", round.id);
+    .from("answers").select("player_id,text,voided").eq("round_id", round.id);
 
   const playerIds = (playerRows ?? []).map((p) => p.id);
   const currentTotals: Record<string, number> = {};
@@ -62,9 +61,11 @@ export async function finalizeRound(
   // respondentes = tem linha com texto nao-vazio (inclui voided → +2)
   const answeredIds = (answerRows ?? []).filter((a) => a.text.trim() !== "").map((a) => a.player_id);
 
-  // borda <2: se nao veio melhor explicito e so ha um respondente, ele leva +10
+  // borda <2: se nao veio melhor explicito e so ha um respondente valido (nao anulado), ele leva +10
+  const validIds = (answerRows ?? [])
+    .filter((a) => a.text.trim() !== "" && !a.voided).map((a) => a.player_id);
   let effectiveBest = bestId;
-  if (effectiveBest == null && answeredIds.length === 1) effectiveBest = answeredIds[0];
+  if (effectiveBest == null && validIds.length === 1) effectiveBest = validIds[0];
 
   const deltas = roundDeltas({ playerIds, answeredIds, bestId: effectiveBest, worstId, currentTotals });
 
@@ -121,6 +122,18 @@ export async function maybeTally(supabase: SB, roundId: string) {
   if (!round) return;
   if (round.phase !== "votar" && round.phase !== "desempate") return;
   const isTiebreak = round.phase === "desempate";
+
+  // Guarda: com menos de 2 candidatos votaveis (ex.: anulacoes durante "votar") ninguem
+  // consegue completar a votacao (nao se vota em si mesmo); finaliza direto.
+  if (!isTiebreak) {
+    const { data: candRows } = await supabase
+      .from("answers").select("player_id,text,voided").eq("round_id", roundId);
+    const votable = (candRows ?? []).filter((a) => a.text.trim() !== "" && !a.voided);
+    if (votable.length < 2) {
+      await finalizeRound(supabase, round, votable[0]?.player_id ?? null, null);
+      return;
+    }
+  }
 
   const { count: playerCount } = await supabase
     .from("players").select("id", { count: "exact", head: true }).eq("room_id", round.room_id);
@@ -179,10 +192,13 @@ export async function maybeTally(supabase: SB, roundId: string) {
   if (round.tiebreak_kind === "best") {
     const winner = resolveTiebreak(round.tiebreak_candidates, tbBest, submittedAt);
     if (base.worstIds.length > 1) {
-      await supabase.from("votes").delete().eq("round_id", roundId).eq("is_tiebreak", true);
-      await supabase.from("rounds").update({
-        phase: "desempate", tiebreak_kind: "worst", tiebreak_candidates: base.worstIds, best_winner: winner,
-      }).eq("id", roundId).eq("phase", "desempate");
+      // claim primeiro: so quem vencer a transicao best→worst apaga os votos de desempate
+      const { data: claimed } = await supabase.from("rounds").update({
+        tiebreak_kind: "worst", tiebreak_candidates: base.worstIds, best_winner: winner,
+      }).eq("id", roundId).eq("phase", "desempate").eq("tiebreak_kind", "best").select("id");
+      if (claimed && claimed.length > 0) {
+        await supabase.from("votes").delete().eq("round_id", roundId).eq("is_tiebreak", true);
+      }
       return;
     }
     await finalizeRound(supabase, round, winner, base.worstIds[0] ?? null);
