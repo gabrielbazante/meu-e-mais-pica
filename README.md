@@ -52,6 +52,7 @@ Ao criar ou entrar em outra sala depois de uma partida (por exemplo, "Jogar de n
 - **Tailwind CSS v4** — estilo chunky com sombras e bordas
 - **[qrcode.react](https://github.com/zpao/qrcode.react) 4.2.0** — QR Code do convite
 - **Fontes:** Fredoka (corpo) + Baloo 2 (títulos e botões)
+- **Visual:** ícones SVG próprios em `components/icons/` (estilo do logo: preenchimento colorido e contorno escuro grosso), sem emoji na interface. O teste `__tests__/no-emoji.test.ts` impede que emojis voltem.
 
 ---
 

@@ -59,3 +59,10 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Alternativas descartadas:** `pg_cron`: jobs internos do banco podem não contar como atividade do projeto; GitHub Actions desativa workflows agendados em repositório inativo.
 - **Impacto:** exige rodar a migração `0003_keepalive.sql` manualmente. A tabela segue o padrão de RLS do projeto (anon key): insert e select livres, delete só de linhas com mais de 30 dias. `vercel.json` em vez de `vercel.ts` para não adicionar dependência.
 - **Risco aceito:** a anon key consegue inserir linhas em `keepalive_log` (limitado pela policy: `source = 'vercel-cron'` e `created_at <= now()`), e qualquer um pode lê-las. Coerente com o restante do schema, que também usa a anon key com RLS aberta.
+
+## 2026-10-13 — Visual A2: ícones próprios e identidade do logo
+
+- **Decisão:** trocar todos os emojis por um conjunto próprio de ícones SVG (`components/icons/`) no estilo do logo, que tem preenchimento com as cores do logo e contorno escuro grosso. Os títulos usam as letras do logo (`text-logo`), o confete é geométrico (`Confetti`) e a fonte corrigida é Fredoka/Baloo 2 (antes o body forçava Arial). O "pior" é representado por um tomate podre.
+- **Motivo:** o usuário pediu um visual elegante e profissional que mantivesse a essência do tema. Emojis variam por sistema (iOS/Android) e destoam do logo. Ícones de bibliotecas como Lucide e Phosphor são de traço fino e ficariam com cara de "app genérico".
+- **Alternativas descartadas:** ilustrações com volume (B), visual clean minimalista (C), medalhas no boneco (A3) e uma biblioteca de ícones pronta.
+- **Impacto:** nenhuma dependência nova e nenhuma mudança de regra ou dados. O teste `no-emoji` impede regressões. Spec: `docs/superpowers/specs/2026-10-13-visual-icones-a2-design.md`.
