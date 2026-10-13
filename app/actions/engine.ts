@@ -2,7 +2,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { drawRound } from "@/lib/game/draw";
 import { FILL_SECONDS, COUNTDOWN_SECONDS, fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
 import { roundDeltas } from "@/lib/game/scoring";
-import { tallyRound } from "@/lib/game/tally";
+import { tallyRound, worstIdsExcluding } from "@/lib/game/tally";
 import { aliveCandidates, resolveTiebreak } from "@/lib/game/tiebreak";
 import type { Player, Vote } from "@/lib/game/types";
 import type { RoundRow } from "@/lib/supabase/database.types";
@@ -147,20 +147,21 @@ export async function maybeTally(supabase: SB, roundId: string) {
     id: p.id, name: p.name, totalPoints: p.total_points,
   }));
 
-  // recomputa o pior a partir dos votos principais (usado so no desempate)
-  const baseWorstIds = async () => {
+  // recomputa o pior a partir dos votos principais (usado so no desempate), excluindo
+  // o vencedor do melhor: a mesma pessoa nunca e mais pica e pior.
+  const baseWorstIds = async (bestId: string | null) => {
     const { data: origVoteRows } = await supabase
       .from("votes").select("*").eq("round_id", roundId).eq("is_tiebreak", false);
     const origVotes: Vote[] = (origVoteRows ?? []).map((v) => ({
       voterId: v.voter_id, bestId: nullifyVoided(v.best_id), worstId: nullifyVoided(v.worst_id),
     }));
-    return alive(tallyRound(players, origVotes).worstIds);
+    return alive(worstIdsExcluding(origVotes, bestId));
   };
 
   // Melhor ja resolvido no desempate: encadeia para o desempate do pior (se empatar)
   // ou finaliza. Claim primeiro: so quem vencer a transicao best→worst apaga os votos.
   const afterBestResolved = async (bestId: string | null) => {
-    const worstIds = await baseWorstIds();
+    const worstIds = await baseWorstIds(bestId);
     if (worstIds.length > 1) {
       const { data: claimed } = await supabase.from("rounds").update({
         tiebreak_kind: "worst", tiebreak_candidates: worstIds, best_winner: bestId,
@@ -203,13 +204,14 @@ export async function maybeTally(supabase: SB, roundId: string) {
       return;
     }
     const bestId = result.bestIds[0] ?? null;
-    if (result.worstIds.length > 1) {
+    const worstIds = worstIdsExcluding(votes, bestId);
+    if (worstIds.length > 1) {
       await supabase.from("rounds").update({
-        phase: "desempate", tiebreak_kind: "worst", tiebreak_candidates: result.worstIds, best_winner: bestId,
+        phase: "desempate", tiebreak_kind: "worst", tiebreak_candidates: worstIds, best_winner: bestId,
       }).eq("id", roundId).eq("phase", "votar");
       return;
     }
-    await finalizeRound(supabase, round, bestId, result.worstIds[0] ?? null);
+    await finalizeRound(supabase, round, bestId, worstIds[0] ?? null);
     return;
   }
 
@@ -218,7 +220,8 @@ export async function maybeTally(supabase: SB, roundId: string) {
   for (const a of answerRows) submittedAt[a.player_id] = new Date(a.submitted_at).getTime();
   const tbBest = (voteRows ?? []).map((v) => nullifyVoided(v.best_id));
   const cands = alive(round.tiebreak_candidates);
-  const resolved = resolveTiebreak(cands, tbBest, submittedAt);
+  // melhor: empate persistente cai em quem respondeu primeiro; pior: em quem respondeu por ultimo
+  const resolved = resolveTiebreak(cands, tbBest, submittedAt, round.tiebreak_kind === "worst" ? "latest" : "earliest");
 
   if (round.tiebreak_kind === "best") {
     await afterBestResolved(resolved);

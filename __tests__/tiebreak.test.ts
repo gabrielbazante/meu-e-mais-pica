@@ -9,6 +9,10 @@ describe("resolveTiebreak", () => {
     expect(winner).toBe("a");
   });
 
+  it("empate no re-voto com prefer latest: vence (perde) quem respondeu por ultimo", () => {
+    expect(resolveTiebreak(["a", "b"], ["a", "b"], submittedAt, "latest")).toBe("b");
+  });
+
   it("empate no re-voto: vence quem respondeu primeiro (menor submittedAt)", () => {
     const winner = resolveTiebreak(["a", "b"], ["a", "b"], submittedAt);
     expect(winner).toBe("a"); // a=1000 < b=1200

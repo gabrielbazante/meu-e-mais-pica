@@ -1,9 +1,12 @@
 // candidates: ids empatados; bestVotes: lista de bestId do re-voto;
 // submittedAt: mapa de quando cada jogador enviou a resposta original.
+// prefer: empate persistente cai em quem respondeu primeiro ("earliest", desempate do melhor)
+// ou por ultimo ("latest", desempate do pior). Rapidez protege dos dois lados.
 export function resolveTiebreak(
   candidates: string[],
   bestVotes: (string | null)[],
   submittedAt: Record<string, number>,
+  prefer: "earliest" | "latest" = "earliest",
 ): string {
   const set = new Set(candidates);
   const counts: Record<string, number> = {};
@@ -14,7 +17,12 @@ export function resolveTiebreak(
   const max = Math.max(...Object.values(counts));
   const top = candidates.filter((id) => counts[id] === max);
   if (top.length === 1) return top[0];
-  // desempate final: menor submittedAt
+  // desempate final: menor (earliest) ou maior (latest) submittedAt; sem horario perde sempre
+  if (prefer === "latest") {
+    return top.reduce((best, id) =>
+      (submittedAt[id] ?? -Infinity) > (submittedAt[best] ?? -Infinity) ? id : best,
+    );
+  }
   return top.reduce((best, id) =>
     (submittedAt[id] ?? Infinity) < (submittedAt[best] ?? Infinity) ? id : best,
   );

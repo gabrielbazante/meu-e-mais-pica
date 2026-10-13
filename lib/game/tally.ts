@@ -40,3 +40,9 @@ export function tallyRound(players: Player[], votes: Vote[]): TallyResult {
   }
   return { bestIds, worstIds, needsTiebreak: false, points };
 }
+
+// Pior excluindo o vencedor do melhor: a mesma pessoa nunca e mais pica e pior.
+// Conta so os worstId diferentes de excludeId; vazio se ninguem mais recebeu voto de pior.
+export function worstIdsExcluding(votes: Vote[], excludeId: string | null): string[] {
+  return topIds(countVotes(votes.map((v) => (v.worstId && v.worstId !== excludeId ? v.worstId : null))));
+}

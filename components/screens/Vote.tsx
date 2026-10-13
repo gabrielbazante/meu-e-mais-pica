@@ -90,11 +90,11 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
               <div className="flex gap-2">
                 <button disabled={self}
                   className={"flex-1 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (best === a.player_id ? pickColor : "bg-white")}
-                  onClick={() => setBest(a.player_id)}>{pickLabel}</button>
+                  onClick={() => { setBest(a.player_id); if (!tiebreak && worst === a.player_id) setWorst(null); }}>{pickLabel}</button>
                 {!tiebreak && (
                   <button disabled={self}
                     className={"flex-1 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (worst === a.player_id ? "bg-party-red text-white" : "bg-white")}
-                    onClick={() => setWorst(a.player_id)}>Pior 💩</button>
+                    onClick={() => { setWorst(a.player_id); if (best === a.player_id) setBest(null); }}>Pior 💩</button>
                 )}
               </div>
             )}
