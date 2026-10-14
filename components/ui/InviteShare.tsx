@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { Check, Copy, WhatsApp } from "@/components/icons";
 import { inviteUrl, whatsappShareUrl } from "@/lib/invite";
 
 const BTN =
-  "block w-full rounded-xl border-3 border-ink px-4 py-2.5 text-center font-display font-extrabold text-ink " +
+  "inline-flex w-full items-center justify-center gap-2 rounded-xl border-3 border-ink px-4 py-2.5 text-center font-display font-extrabold text-ink " +
   "shadow-chunkySm active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all";
 
 export function InviteShare({ code }: { code: string }) {
@@ -55,10 +56,12 @@ export function InviteShare({ code }: { code: string }) {
           rel="noopener noreferrer"
           className={BTN + " bg-party-teal"}
         >
+          <WhatsApp size={22} />
           Compartilhar no WhatsApp
         </a>
         <button type="button" onClick={copy} className={BTN + " bg-party-yellow"}>
-          {status === "ok" ? "Copiado ✓" : status === "fail" ? "Não deu pra copiar" : "Copiar link"}
+          {status === "ok" ? <Check size={20} /> : <Copy size={20} />}
+          {status === "ok" ? "Copiado" : status === "fail" ? "Não deu pra copiar" : "Copiar link"}
         </button>
         <span className="sr-only" role="status" aria-live="polite">
           {status === "ok" ? "Link copiado" : status === "fail" ? "Não deu pra copiar o link" : ""}

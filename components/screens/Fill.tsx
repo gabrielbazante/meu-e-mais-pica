@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { submitAnswer, expireFill } from "@/app/actions/game";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
+import { Alert, Check, Clock, Flame, Target } from "@/components/icons";
 import type { AnswerRow, PlayerRow, RoundRow, RoomRow } from "@/lib/supabase/database.types";
 
 // Intervalo entre tentativas de expireFill depois que o timer zerou. O servidor
@@ -60,17 +61,23 @@ export function Fill({ round, room, players, answers, meId, isHost }: {
           <ManagePlayers roomId={room.id} players={players} meId={meId} hostId={room.host_id} />
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <Card className="flex-1 !p-3 text-center">
-          <p className="text-xs font-bold opacity-60">TEMA</p>
-          <p className="text-xl font-black text-party-teal">{round.theme ?? ""}</p>
+      <div className="flex items-stretch gap-3">
+        <Card className="min-w-0 flex-1 !p-3 text-center">
+          <p className="flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider opacity-60">
+            <Target size={14} />
+            Tema
+          </p>
+          <p className="break-words font-display text-xl font-extrabold text-logo-blue">{round.theme ?? ""}</p>
         </Card>
-        <div className="mx-3 rounded-xl border-3 border-ink bg-party-red px-4 py-2 text-center text-white shadow-chunkySm">
-          <p className="text-xs font-bold">LETRA</p>
-          <p className="text-3xl font-black">{round.letter ?? ""}</p>
+        <div className="rounded-2xl border-3 border-ink bg-logo-pink px-4 py-2 text-center shadow-chunkySm">
+          <p className="text-xs font-bold uppercase tracking-wider text-ink">Letra</p>
+          <p className="text-logo font-display text-4xl font-extrabold leading-none">{round.letter ?? ""}</p>
         </div>
-        <div className="rounded-full border-3 border-ink bg-white px-3 py-2 text-xl font-black">{left}s</div>
       </div>
+      <p className="flex items-center justify-center gap-2 font-display text-2xl font-extrabold">
+        <Clock size={30} />
+        {left}s
+      </p>
 
       <Card className="flex flex-col gap-3">
         <input
@@ -87,13 +94,19 @@ export function Fill({ round, room, players, answers, meId, isHost }: {
             const res = await submitAnswer({ roundId: round.id, playerId: meId, text });
             if (res?.taken) {
               setSent(false);
-              setWarn(`"${res.word}" já foi usada — manda outra! 😅`);
+              setWarn(`"${res.word}" já foi usada. Manda outra!`);
             }
           }}
+          icon={sent ? <Check size={22} /> : <Flame size={22} />}
         >
-          {sent ? "Enviado ✅" : "O meu é mais pica 🔥"}
+          {sent ? "Enviado" : "O meu é mais pica"}
         </Button>
-        {warn && <p className="text-center font-bold text-party-red">{warn}</p>}
+        {warn && (
+          <p className="flex items-center justify-center gap-2 text-center font-bold text-party-red">
+            <Alert size={20} />
+            {warn}
+          </p>
+        )}
       </Card>
 
       <p className="text-center font-bold opacity-70">{sentCount}/{players.length} responderam</p>

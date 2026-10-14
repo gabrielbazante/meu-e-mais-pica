@@ -7,6 +7,8 @@ import { VotersList } from "@/components/ui/VotersList";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { castVote, voidAnswer } from "@/app/actions/game";
 import { possibleDuplicates } from "@/lib/game/similarity";
+import { LogoTitle } from "@/components/ui/LogoTitle";
+import { Alert, Flame, Scale, Target, Tomato } from "@/components/icons";
 import type { AnswerRow, PlayerRow, RoundRow, VoteRow } from "@/lib/supabase/database.types";
 
 export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
@@ -36,11 +38,10 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
   // escolhas que sairam da lista (anulada/expulso) nao contam
   const isCandidate = (id: string | null) => !!id && candidates.some((a) => a.player_id === id);
   const canSend = tiebreak ? isCandidate(best) : isCandidate(best) && isCandidate(worst);
-  const header = tiebreak
-    ? (kind === "worst" ? "💩 DESEMPATE — vote no PIOR" : "🔥 DESEMPATE — vote no MELHOR")
-    : "Vote no mais pica e no pior";
-  const pickLabel = tiebreak && kind === "worst" ? "Pior 💩" : "Mais pica 🔥";
-  const pickColor = tiebreak && kind === "worst" ? "bg-party-red text-white" : "bg-party-teal text-white";
+  const worstPick = tiebreak && kind === "worst";
+  const pickLabel = worstPick ? "Pior" : "Mais pica";
+  const pickIcon = worstPick ? <Tomato size={20} /> : <Flame size={20} />;
+  const pickColor = worstPick ? "bg-logo-purple text-white" : "bg-logo-pink text-ink";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-5">
@@ -49,10 +50,21 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
           <ManagePlayers roomId={roomId} players={players} meId={meId} hostId={meId} />
         </div>
       )}
-      <Card className="text-center !py-2">
-        <p className="font-black">{header}</p>
-        <p className="text-sm opacity-70">{round.theme} · letra {round.letter}</p>
-      </Card>
+      <header className="flex flex-col items-center gap-2 text-center">
+        {tiebreak ? (
+          <>
+            <Scale size={40} />
+            <LogoTitle size="md">Desempate</LogoTitle>
+            <p className="font-display text-lg font-extrabold">{worstPick ? "Vote no PIOR" : "Vote no MELHOR"}</p>
+          </>
+        ) : (
+          <LogoTitle size="md">Hora de votar</LogoTitle>
+        )}
+        <div className="flex flex-wrap justify-center gap-2">
+          <span className="pill"><Target size={16} />{round.theme}</span>
+          <span className="pill">Letra <b className="font-display text-base">{round.letter}</b></span>
+        </div>
+      </header>
 
       {candidates.map((a) => {
         const self = a.player_id === meId;
@@ -61,10 +73,15 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
           <Card key={a.player_id} className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <BlockAvatar seed={a.player_id} size={32} colorIndex={joinIndex.get(a.player_id)} />
-              <span className="font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
-              {flagged && <span className="ml-auto text-xs font-bold text-party-red">parece repetida?</span>}
+              <span className="min-w-0 [overflow-wrap:anywhere] font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
+              {flagged && (
+                <span className="ml-auto inline-flex flex-none items-center gap-1 text-xs font-bold text-party-red">
+                  <Alert size={16} />
+                  parece repetida?
+                </span>
+              )}
             </div>
-            <p className="rounded-lg bg-party-yellow/40 px-3 py-2 font-bold">{a.text}</p>
+            <p className="[overflow-wrap:anywhere] rounded-lg border-2 border-ink bg-cream px-3 py-2 font-bold">{a.text}</p>
 
             {isHost && !tiebreak && !self && (
               <button
@@ -89,12 +106,18 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
             {!sent && (
               <div className="flex gap-2">
                 <button disabled={self}
-                  className={"flex-1 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (best === a.player_id ? pickColor : "bg-white")}
-                  onClick={() => { setBest(a.player_id); if (!tiebreak && worst === a.player_id) setWorst(null); }}>{pickLabel}</button>
+                  className={"inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (best === a.player_id ? pickColor : "bg-white")}
+                  onClick={() => { setBest(a.player_id); if (!tiebreak && worst === a.player_id) setWorst(null); }}>
+                  {pickIcon}
+                  {pickLabel}
+                </button>
                 {!tiebreak && (
                   <button disabled={self}
-                    className={"flex-1 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (worst === a.player_id ? "bg-party-red text-white" : "bg-white")}
-                    onClick={() => { setWorst(a.player_id); if (best === a.player_id) setBest(null); }}>Pior 💩</button>
+                    className={"inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border-3 border-ink py-2 font-bold disabled:opacity-30 " + (worst === a.player_id ? "bg-logo-purple text-white" : "bg-white")}
+                    onClick={() => { setWorst(a.player_id); if (best === a.player_id) setBest(null); }}>
+                    <Tomato size={20} />
+                    Pior
+                  </button>
                 )}
               </div>
             )}

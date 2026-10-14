@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { LogoTitle } from "@/components/ui/LogoTitle";
+import { Confetti } from "@/components/ui/Confetti";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
+import { Flame, Play, Star, Tomato, Trophy } from "@/components/icons";
 import { Ranking } from "./Ranking";
 import { nextRound, endGame } from "@/app/actions/game";
 import type { AnswerRow, PlayerRow, RoundRow, VoteRow } from "@/lib/supabase/database.types";
@@ -22,6 +25,7 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
   const mainVotes = votes.filter((v) => !v.is_tiebreak);
   const countFor = (id: string | null, field: "best_id" | "worst_id") =>
     id ? mainVotes.filter((v) => v[field] === id).length : 0;
+  const votesLabel = (n: number) => `${n} ${n === 1 ? "voto" : "votos"}`;
 
   const bestId = round.best_winner;
   const worstId = round.worst_loser;
@@ -36,32 +40,44 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
         </div>
       )}
       {!showRanking ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <Confetti />
-          <div>
-            <p className="text-lg font-bold opacity-70">O mais pica 🔥</p>
-            <p className="font-display text-3xl font-black">{nameOf(bestId)}</p>
-            <Card className="!bg-party-teal mt-1 text-white">{textOf(bestId)} <span className="opacity-80">({countFor(bestId, "best_id")} {countFor(bestId, "best_id") === 1 ? "voto" : "votos"})</span></Card>
-          </div>
-          <div>
-            <p className="text-lg font-bold opacity-70">O pior 💩</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
+          <Confetti variant="party" />
+          <section className="flex w-full flex-col items-center gap-2">
+            <Flame size={52} />
+            <LogoTitle as="h2" size="md">O mais pica</LogoTitle>
+            <p className="[overflow-wrap:anywhere] font-display text-3xl font-extrabold">{nameOf(bestId)}</p>
+            <Card className="w-full [overflow-wrap:anywhere] !bg-logo-pink font-bold text-ink">
+              {textOf(bestId)} <span className="opacity-85">· {votesLabel(countFor(bestId, "best_id"))}</span>
+            </Card>
+          </section>
+          <section className="flex w-full flex-col items-center gap-2">
             {worstId == null ? (
-              <p className="font-display text-xl font-black">Sem pior nesta rodada 🙌</p>
+              <>
+                <Star size={44} />
+                <p className="font-display text-xl font-extrabold">Sem pior nesta rodada</p>
+              </>
             ) : (
               <>
-                <p className="font-display text-2xl font-black">{nameOf(worstId)}</p>
-                <Card className="!bg-party-red mt-1 text-white">{textOf(worstId)} <span className="opacity-80">({countFor(worstId, "worst_id")} {countFor(worstId, "worst_id") === 1 ? "voto" : "votos"})</span></Card>
+                <Tomato size={46} />
+                <LogoTitle as="h2" size="sm">O pior</LogoTitle>
+                <p className="[overflow-wrap:anywhere] font-display text-2xl font-extrabold">{nameOf(worstId)}</p>
+                <Card className="w-full [overflow-wrap:anywhere] !bg-logo-purple font-bold text-white">
+                  {textOf(worstId)} <span className="opacity-85">· {votesLabel(countFor(worstId, "worst_id"))}</span>
+                </Card>
               </>
             )}
-          </div>
+          </section>
         </div>
       ) : (
         <>
-          <h2 className="text-center text-2xl font-black">Ranking 🏆</h2>
+          <div className="flex items-center justify-center gap-2">
+            <Trophy size={36} />
+            <LogoTitle as="h2" size="md">Ranking</LogoTitle>
+          </div>
           <Ranking players={players} deltas={round.round_scores} />
           {isHost ? (
             <div className="mt-2 flex flex-col gap-2">
-              <Button disabled={busy} onClick={() => run(() => nextRound({ roomId: room.id, playerId: meId }))}>Próxima rodada ▶</Button>
+              <Button disabled={busy} icon={<Play size={20} />} onClick={() => run(() => nextRound({ roomId: room.id, playerId: meId }))}>Próxima rodada</Button>
               <Button className="!bg-ink" disabled={busy} onClick={() => run(() => endGame({ roomId: room.id, playerId: meId }))}>Encerrar partida</Button>
             </div>
           ) : (
@@ -70,20 +86,5 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
         </>
       )}
     </main>
-  );
-}
-
-function Confetti() {
-  return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden">
-      {Array.from({ length: 40 }).map((_, i) => (
-        <span key={i} style={{
-          position: "absolute", left: `${Math.random() * 100}%`, top: "-10%",
-          fontSize: 18 + Math.random() * 14,
-          animation: `fall ${1.5 + Math.random() * 1.5}s linear ${Math.random()}s forwards`,
-        }}>{["🎉", "✨", "🔥", "⭐"][i % 4]}</span>
-      ))}
-      <style>{`@keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2}}`}</style>
-    </div>
   );
 }

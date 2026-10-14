@@ -1,0 +1,87 @@
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  .wrap{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+  .ph{position:relative;overflow:hidden;width:290px;background:#ffd23f;border-radius:28px;padding:22px 14px 16px;font-family:Fredoka,sans-serif;color:#1a1a2e;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .lbl{text-align:center;font-family:'Baloo 2';font-weight:800;margin-bottom:8px;color:#444}
+  .d{font-family:'Baloo 2',sans-serif}
+  .conf{position:absolute;inset:0;pointer-events:none}
+  .rel{position:relative}
+  .logo-txt{font-family:'Baloo 2';font-weight:800;color:#fff6e6;-webkit-text-stroke:2px #1a1a2e;paint-order:stroke fill;text-shadow:3px 3px 0 #1a1a2e;line-height:1}
+  .card{background:#fff;border:3px solid #1a1a2e;border-radius:16px;box-shadow:4px 4px 0 #1a1a2e;padding:10px 12px}
+  .btn{border-radius:14px;padding:11px;text-align:center;font-family:'Baloo 2';font-weight:800;font-size:16px;color:#fff;background:#ff5252;border:3px solid #1a1a2e;box-shadow:4px 4px 0 #1a1a2e;display:flex;align-items:center;justify-content:center;gap:8px}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:2.5px solid #1a1a2e;border-radius:999px;padding:2px 10px;font-weight:700;font-size:13px;box-shadow:2px 2px 0 #1a1a2e}
+  .ln{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:14px;line-height:1.3;margin:8px 0}
+  .ln svg{flex:none;width:26px;height:26px}
+  .av{width:28px;height:28px;border-radius:8px;border:2.5px solid #1a1a2e;flex:none}
+  .vb{flex:1;border:2.5px solid #1a1a2e;border-radius:10px;padding:6px 0;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px;background:#fff}
+  .sel-b{background:#ff1f8e;color:#fff}
+  .sel-w{background:#8b2be2;color:#fff}
+  .ans{background:#fff6e6;border:2px solid #1a1a2e;border-radius:10px;padding:6px 10px;font-weight:700;margin:6px 0}
+</style>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="crown" viewBox="0 0 24 24"><path d="M2 7l5 4 5-7 5 7 5-4-2 12H4L2 7Z" fill="#ffc61a" stroke="#1a1a2e" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 12l1.6 2-1.6 2-1.6-2Z" fill="#8b2be2"/></symbol>
+  <symbol id="flame" viewBox="0 0 24 24"><path d="M12 2c1 3.5 5.5 5.5 5.5 11a5.5 5.5 0 0 1-11 0c0-2.6 1.4-4.2 2.6-5.4.2 1.8.9 3 2 3.4C10.6 8 11 5 12 2Z" fill="#ff5a1f" stroke="#1a1a2e" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 12c.6 1.6 2.4 2.4 2.4 4.6a2.4 2.4 0 0 1-4.8 0c0-1.5.9-2.4 2.4-4.6Z" fill="#ffc61a"/></symbol>
+  <symbol id="tomato" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="8.5" fill="#ff5252" stroke="#1a1a2e" stroke-width="1.8"/><path d="M12 5.5c-1-2-3-2.5-4.5-2 1.3 1 2 1.6 2.2 2.6M12 5.5c1-2 3-2.5 4.5-2-1.3 1-2 1.6-2.2 2.6M12 5.5V3" stroke="#1a1a2e" stroke-width="1.5" fill="#4ade80" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 12.5l1.5 1.2M17 12.5l-1.5 1.2M9.3 17.5c1.6-1 3.8-1 5.4 0" stroke="#1a1a2e" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="16.5" cy="17" r="1.2" fill="#8b2be2"/></symbol>
+  <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#ff1f8e" stroke="#1a1a2e" stroke-width="1.8"/><circle cx="12" cy="12" r="6" fill="#fff" stroke="#1a1a2e" stroke-width="1.5"/><circle cx="12" cy="12" r="2.6" fill="#ff1f8e" stroke="#1a1a2e" stroke-width="1.3"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#fff" stroke="#1a1a2e" stroke-width="1.8"/><path d="M12 2.5A9.5 9.5 0 0 1 21.5 12H12Z" fill="#ff5252" opacity=".85"/><path d="M12 12V7M12 12l3.5 2" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="ballot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2" fill="#1e7be0" stroke="#1a1a2e" stroke-width="1.8"/><rect x="7" y="3" width="10" height="11" rx="1.5" fill="#fff" stroke="#1a1a2e" stroke-width="1.6" transform="rotate(-6 12 8)"/><path d="M9.5 8.5l2 2 3.5-4" stroke="#4ecdc4" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="6" y="13.5" width="12" height="1.8" rx=".9" fill="#1a1a2e"/></symbol>
+  <symbol id="trophy" viewBox="0 0 24 24"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3V3Z" fill="#ffc61a" stroke="#1a1a2e" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 6.5l1.2 1.6L12 9.7l-1.2-1.6Z" fill="#8b2be2"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24"><path d="M12 3v17M6 20h12M4 6h16" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/><path d="M4 6l-2.5 6a2.5 2.5 0 0 0 5 0ZM20 6l-2.5 6a2.5 2.5 0 0 0 5 0Z" fill="#8b2be2" stroke="#1a1a2e" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5Z" fill="#fff" stroke="#1a1a2e" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="alert" viewBox="0 0 24 24"><path d="M12 2.5l10 17.5H2Z" fill="#ffc61a" stroke="#1a1a2e" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5" stroke="#1a1a2e" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17" r="1.3" fill="#1a1a2e"/></symbol>
+</defs></svg>
+
+<h2>O estilo A2 aplicado em outras telas</h2>
+<p class="subtitle">Regras, votação e resultado da rodada — confere se a "cara" se mantém consistente pelo app.</p>
+
+<div class="wrap">
+  <!-- REGRAS -->
+  <div><div class="lbl">Regras</div><div class="ph">
+    <svg class="conf" viewBox="0 0 290 560"><polygon points="20,30 38,22 32,44" fill="#ff1f8e"/><polygon points="252,40 274,50 258,64" fill="#1e7be0"/><circle cx="270" cy="300" r="5" fill="#8b2be2"/><circle cx="14" cy="380" r="4" fill="#ff1f8e"/></svg>
+    <div class="rel" style="text-align:center"><div class="logo-txt" style="font-size:32px">COMO JOGA</div></div>
+    <div class="card rel" style="margin-top:14px">
+      <div class="ln"><svg><use href="#target"/></svg><span>Sai um <b>tema</b> e uma <b>letra</b>. Responda algo do tema começando com a letra.</span></div>
+      <div class="ln"><svg><use href="#clock"/></svg><span>Você tem <b>1 minuto</b>. Não vale repetir palavra já usada.</span></div>
+      <div class="ln"><svg><use href="#ballot"/></svg><span>Todo mundo vota no <b>mais pica</b> e no <b>pior</b>. Em você não vale.</span></div>
+      <div class="ln"><svg><use href="#trophy"/></svg><span><b>+10</b> melhor · <b>+2</b> respondeu · <b>0</b> pior · <b>−1</b> não respondeu</span></div>
+      <div class="ln"><svg><use href="#scale"/></svg><span>Empatou? Rola <b>desempate</b>.</span></div>
+    </div>
+    <div class="btn rel" style="margin-top:16px"><svg width="18" height="18"><use href="#play"/></svg>Bora!</div>
+  </div></div>
+
+  <!-- VOTAR -->
+  <div><div class="lbl">Votação</div><div class="ph">
+    <div class="rel" style="text-align:center">
+      <div class="logo-txt" style="font-size:26px">HORA DE VOTAR</div>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><span class="pill"><svg width="16" height="16"><use href="#target"/></svg>Times de futebol</span><span class="pill">Letra <b class="d" style="font-size:15px">M</b></span></div>
+    </div>
+    <div class="card rel" style="margin-top:12px">
+      <div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:#4ade80"></div><b>Marina</b></div>
+      <div class="ans">Manchester United</div>
+      <div style="display:flex;gap:6px"><div class="vb sel-b"><svg width="16" height="16"><use href="#flame"/></svg>Mais pica</div><div class="vb"><svg width="16" height="16"><use href="#tomato"/></svg>Pior</div></div>
+    </div>
+    <div class="card rel" style="margin-top:10px">
+      <div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:#4ecdc4"></div><b>Rafael</b><span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#c2410c"><svg width="14" height="14"><use href="#alert"/></svg>parece repetida?</span></div>
+      <div class="ans">Man United</div>
+      <div style="display:flex;gap:6px"><div class="vb"><svg width="16" height="16"><use href="#flame"/></svg>Mais pica</div><div class="vb sel-w"><svg width="16" height="16"><use href="#tomato"/></svg>Pior</div></div>
+    </div>
+    <div class="btn rel" style="margin-top:14px">Confirmar voto</div>
+  </div></div>
+
+  <!-- RESULTADO -->
+  <div><div class="lbl">Resultado da rodada</div><div class="ph">
+    <svg class="conf" viewBox="0 0 290 560"><polygon points="20,30 38,22 32,44" fill="#ff1f8e"/><polygon points="252,40 274,50 258,64" fill="#1e7be0"/><polygon points="40,200 56,210 38,218" fill="#8b2be2"/><circle cx="270" cy="250" r="5" fill="#ff1f8e"/><polygon points="240,420 256,410 260,428" fill="#ffc61a"/><circle cx="24" cy="470" r="5" fill="#1e7be0"/></svg>
+    <div class="rel" style="text-align:center">
+      <svg width="44" height="44"><use href="#flame"/></svg>
+      <div class="logo-txt" style="font-size:26px">O MAIS PICA</div>
+      <div class="d" style="font-size:22px;font-weight:800;margin-top:6px">Marina</div>
+      <div class="card" style="margin-top:6px;background:#ff1f8e;color:#fff;font-weight:700">Manchester United <span style="opacity:.85">· 3 votos</span></div>
+    </div>
+    <div class="rel" style="text-align:center;margin-top:22px">
+      <svg width="40" height="40"><use href="#tomato"/></svg>
+      <div class="logo-txt" style="font-size:22px">O PIOR</div>
+      <div class="d" style="font-size:20px;font-weight:800;margin-top:6px">Rafael</div>
+      <div class="card" style="margin-top:6px;background:#8b2be2;color:#fff;font-weight:700">Man United <span style="opacity:.85">· 2 votos</span></div>
+    </div>
+  </div></div>
+</div>
