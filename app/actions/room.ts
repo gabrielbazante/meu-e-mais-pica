@@ -1,4 +1,6 @@
 "use server";
+import { after } from "next/server";
+import { CLOSE_DELETE_DELAY_MS } from "@/lib/rooms";
 import { createServerClient } from "@/lib/supabase/server";
 import { normalizeAnswer } from "@/lib/game/normalize";
 import { maybeAdvanceFromFill, maybeTally } from "./engine";
@@ -52,6 +54,7 @@ export async function joinRoom(
     .from("rooms").select("*").eq("code", code).maybeSingle();
   if (!room) throw new Error("Sala não encontrada");
   if (room.status === "ended") throw new Error("Esta partida já encerrou");
+  if (room.status === "closed") throw new Error("Esta sala foi encerrada");
 
   // Reconexao por nome: mesmo nome normalizado + mesma sala recupera a cadeira
   // existente (mantendo total_points e, se for a do dono, o host). NAO mutamos a
@@ -90,13 +93,28 @@ export async function joinRoom(
   return { code, playerId: seatId };
 }
 
-export async function deleteRoom(input: { roomId: string; hostId: string }) {
+// Encerra de verdade: marca "closed" na hora (avisa todos) e apaga a sala alguns segundos
+// depois (o cascade leva jogadores, rodadas, etc). Idempotente: sala inexistente retorna.
+// O DELETE e adiado porque, se o cascade remove os players no mesmo instante, os clientes
+// ainda na sala nao recebem o evento do UPDATE e ficam presos na tela. Se o after() nao
+// rodar, o cron diario apaga as salas "closed".
+export async function closeRoom(input: { roomId: string; hostId: string }) {
   const supabase = createServerClient();
   const { data: room } = await supabase
     .from("rooms").select("host_id").eq("id", input.roomId).maybeSingle();
-  if (!room || room.host_id !== input.hostId) throw new Error("Sem permissão");
-  const { error } = await supabase.from("rooms").delete().eq("id", input.roomId);
-  if (error) throw new Error(error.message);
+  if (!room) return;
+  if (room.host_id !== input.hostId) throw new Error("Sem permissão");
+  const { error: uErr } = await supabase.from("rooms").update({ status: "closed" }).eq("id", input.roomId);
+  if (uErr) throw new Error(uErr.message);
+  after(async () => {
+    try {
+      await new Promise((r) => setTimeout(r, CLOSE_DELETE_DELAY_MS));
+      const { error } = await supabase.from("rooms").delete().eq("id", input.roomId);
+      if (error) console.error("closeRoom delete", error.message);
+    } catch (e) {
+      console.error("closeRoom delete", e instanceof Error ? e.message : e);
+    }
+  });
 }
 
 // O Realtime nao entrega DELETE em assinaturas com filtro (o old record so traz a PK,

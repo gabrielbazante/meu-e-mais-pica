@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { isStaleDeploymentError, recoverFromStaleDeployment } from "@/lib/staleDeploy";
 import { getPlayerId, setPlayerId } from "@/lib/identity";
@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Alert, ArrowLeft, Play } from "@/components/icons";
 
+// Le o aviso da URL sem useSearchParams (que exigiria Suspense na pagina estatica).
+const noopSubscribe = () => () => {};
+const readAviso = () => new URLSearchParams(window.location.search).get("aviso") ?? "";
+
 export default function Home() {
+  const aviso = useSyncExternalStore(noopSubscribe, readAviso, () => "");
   const router = useRouter();
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
@@ -65,6 +70,12 @@ export default function Home() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.png" alt="O meu é mais pica" className="mx-auto w-full max-w-sm drop-shadow-[4px_4px_0_rgba(26,26,46,0.25)]" />
       <h1 className="sr-only">O meu é mais pica</h1>
+      {aviso === "sala-encerrada" && (
+        <p role="status" className="flex items-center justify-center gap-2 text-center font-bold text-ink">
+          <Alert size={20} />
+          A sala foi encerrada pelo dono.
+        </p>
+      )}
       <Card className="flex flex-col gap-3">
         <input
           className="rounded-xl border-3 border-ink px-3 py-3 font-semibold outline-none"

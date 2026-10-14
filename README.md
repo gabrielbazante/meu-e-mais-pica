@@ -41,7 +41,9 @@ O total nunca fica abaixo de 0. Quem não respondeu não aparece como opção de
 
 Caiu, fechou a aba ou perdeu o acesso? Entre com o **mesmo nome na mesma sala** e você recupera sua cadeira e seus pontos. Se for o dono, ele também recupera a coroa. Quem não está mais na sala vê o card "Entrar nesta sala".
 
-Ao criar ou entrar em outra sala depois de uma partida (por exemplo, "Jogar de novo"), você ganha uma **cadeira nova**, com zero pontos. A partida anterior continua intacta, com o pódio preservado.
+### Encerrando a sala
+
+Todos veem o pódio. Quando o **dono** toca em "Jogar de novo", a sala é **encerrada e apagada** (jogadores, rodadas, respostas e votos), e quem ainda estiver nela volta à tela inicial com o aviso "A sala foi encerrada pelo dono.". No lobby, "Apagar sala e sair" faz o mesmo. Além disso, as salas com mais de 24 h, encerradas ou abandonadas, são limpas diariamente pelo cron. Ao criar ou entrar em outra sala, você ganha uma **cadeira nova**, com zero pontos.
 
 ---
 

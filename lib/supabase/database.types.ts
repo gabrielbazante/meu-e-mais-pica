@@ -2,7 +2,7 @@ export interface RoomRow {
   id: string;
   code: string;
   host_id: string;
-  status: "lobby" | "playing" | "ended";
+  status: "lobby" | "playing" | "ended" | "closed";
   current_round_id: string | null;
   created_at: string;
 }

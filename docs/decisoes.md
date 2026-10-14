@@ -73,3 +73,12 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Causa:** o servidor calculava `starts_at = agora + 3 s` antes de gravar a rodada (INSERT, UPDATE em `rooms`, cada um um round trip Vercel iad1 para Supabase em São Paulo). Depois o Realtime e o `load()` do `useRoom` (5 consultas sequenciais, 0,35 a 0,78 s cada) consumiam cerca de 2 s, e o jogador via só o "1" e a chama.
 - **Alternativa futura:** paralelizar as consultas do `load()` do `useRoom`, reduzindo a latência em vez de só compensá-la.
 - **Impacto:** a contagem dura 2,5 s a mais até aparecer o 3. Lógica de retry do `beginRound` inalterada.
+
+## 2026-10-13 — Encerrar a sala de verdade
+
+- **Decisão:** `deleteRoom` virou `closeRoom`: marca `rooms.status = "closed"` e depois apaga a sala (cascade leva o resto). O dono dispara isso em "Jogar de novo" no pódio e em "Apagar sala e sair" no lobby. Os clientes tratam `status = "closed"`, ou a sala sumir depois de já ter existido (`lib/rooms.ts`), como encerramento e vão para `/?aviso=sala-encerrada`. O cron diário apaga também salas com `created_at` de mais de 24 h.
+- **Motivo:** antes, `endGame` só marcava `ended` e tudo ficava no banco para sempre; e o Realtime não entrega DELETE em assinaturas com filtro, então o simples delete não avisava os outros jogadores (mesma causa do `touchRoom` no kick). O UPDATE antes do DELETE é o que dispara o aviso.
+- **Alternativas descartadas:** apagar já em `endGame` (tiraria o pódio de quem ainda o olha); só depender do cron (dados ficam até 24 h e sem aviso).
+- **Impacto:** sem migração (`rooms.status` é `text` sem constraint). O pódio some depois que o dono sai dele; o aviso na home é lido de `window.location.search` via `useSyncExternalStore`, evitando `Suspense`. Se o UPDATE se perder, o cliente ainda detecta pelo sumiço da sala no próximo reload.
+- **Delete adiado:** o `closeRoom` só faz o UPDATE para `closed` e agenda o DELETE 5 s depois com `after()` (`CLOSE_DELETE_DELAY_MS`). Testado contra o Supabase real: apagar junto do UPDATE, com jogadores na sala, faz o cascade remover os `players` antes de o Realtime entregar o evento, e os outros clientes ficam presos no pódio; com 5 s de atraso o redirecionamento funciona. Se o `after()` não rodar, o cron apaga qualquer sala `closed`.
+- **Limites:** o TTL de 24 h conta a partir da criação da sala (`created_at`). Encerrar é protegido como o resto do modelo anônimo (RLS aberta): não há autenticação real do dono. Erro de rede ao carregar a sala não conta como encerramento (o estado anterior é mantido).

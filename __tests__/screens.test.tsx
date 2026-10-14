@@ -3,6 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { PlayerRow, VoteRow } from "@/lib/supabase/database.types";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/app/actions/room", () => ({ closeRoom: vi.fn() }));
+
+const room = { id: "r", host_id: "1" };
 
 const player = (id: string, name: string, total_points = 0): PlayerRow => ({
   id, room_id: "r", name, total_points, connected: true, joined_at: `2026-10-13T00:00:0${id}Z`,
@@ -40,7 +43,7 @@ describe("Podium", () => {
   it("mostra o campeão no selo com coroa e os degraus 1-2-3", async () => {
     const { Podium } = await import("@/components/screens/Podium");
     const html = renderToStaticMarkup(
-      <Podium players={[player("1", "Júlia Branco", 68), player("2", "Marina", 66), player("3", "Rafael", 64)]} />,
+      <Podium players={[player("1", "Júlia Branco", 68), player("2", "Marina", 66), player("3", "Rafael", 64)]} room={room} meId="1" />,
     );
     expect(html).toContain("Júlia Branco venceu!");
     expect(html).toContain('aria-label="campeã(o)"');
@@ -52,7 +55,7 @@ describe("Podium", () => {
 
   it("com 2 jogadores renderiza só os degraus existentes", async () => {
     const { Podium } = await import("@/components/screens/Podium");
-    const html = renderToStaticMarkup(<Podium players={[player("1", "Ana", 10), player("2", "Bia", 4)]} />);
+    const html = renderToStaticMarkup(<Podium players={[player("1", "Ana", 10), player("2", "Bia", 4)]} room={room} meId="2" />);
     expect(html).toContain('data-rank="1"');
     expect(html).toContain('data-rank="2"');
     expect(html).not.toContain('data-rank="3"');

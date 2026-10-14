@@ -1,5 +1,6 @@
 "use client";
 import { use, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useRoom } from "@/lib/useRoom";
 import { getPlayerId, setPlayerId } from "@/lib/identity";
 import { isStaleDeploymentError, recoverFromStaleDeployment } from "@/lib/staleDeploy";
@@ -20,13 +21,19 @@ export default function SalaPage({ params }: { params: Promise<{ code: string }>
   const upper = code.toUpperCase();
   const [meId, setMeId] = useState("");
   useEffect(() => setMeId(getPlayerId()), []);
-  const { room, players, round, answers, votes, loading } = useRoom(upper);
+  const { room, players, round, answers, votes, loading, closed } = useRoom(upper);
+  const router = useRouter();
+  // Sala encerrada pelo dono: quem ainda estava nela volta para a tela inicial com aviso.
+  useEffect(() => {
+    if (closed) router.replace(room?.host_id === meId ? "/" : "/?aviso=sala-encerrada");
+  }, [closed, router, room, meId]);
 
+  if (closed) return <Center>Sala encerrada</Center>;
   if (loading || !meId) return <Center>Carregando…</Center>;
   if (!room) return <Center><Sad size={64} />Sala não encontrada</Center>;
 
   const isHost = room.host_id === meId;
-  if (room.status === "ended") return <Podium players={players} />;
+  if (room.status === "ended") return <Podium players={players} room={room} meId={meId} />;
 
   // caiu / foi expulso / perdeu o localStorage: oferece reentrar pelo nome
   const inRoom = players.some((p) => p.id === meId);

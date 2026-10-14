@@ -1,10 +1,12 @@
 "use client";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LogoTitle } from "@/components/ui/LogoTitle";
 import { Confetti } from "@/components/ui/Confetti";
 import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
-import { Crown, Restart } from "@/components/icons";
+import { Alert, Crown, Restart } from "@/components/icons";
+import { closeRoom } from "@/app/actions/room";
 import type { PlayerRow } from "@/lib/supabase/database.types";
 
 // Degraus no estilo A2: 1º rosa (mais alto), 2º azul, 3º roxo.
@@ -14,8 +16,21 @@ const STEP = {
   3: { h: "h-16", bg: "bg-logo-purple", num: "text-4xl" },
 } as const;
 
-export function Podium({ players }: { players: PlayerRow[] }) {
+export function Podium({ players, room, meId }: {
+  players: PlayerRow[]; room: { id: string; host_id: string }; meId: string;
+}) {
   const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  // O dono encerra e apaga a sala ao sair do pódio; os demais só voltam para o início.
+  async function handleAgain() {
+    if (meId !== room.host_id) { router.push("/"); return; }
+    setBusy(true); setErr("");
+    try { await closeRoom({ roomId: room.id, hostId: meId }); }
+    catch { setErr("Não deu pra encerrar a sala. Tente de novo."); setBusy(false); return; }
+    setBusy(false);
+    router.push("/");
+  }
   const ordered = [...players].sort((a, b) => b.total_points - a.total_points);
   const joinIndex = colorIndexByJoin(players);
   const [first, second, third] = ordered;
@@ -35,7 +50,13 @@ export function Podium({ players }: { players: PlayerRow[] }) {
         <Step player={first} rank={1} colorIndex={joinIndex.get(first?.id ?? "")} />
         <Step player={third} rank={3} colorIndex={joinIndex.get(third?.id ?? "")} />
       </div>
-      <Button onClick={() => router.push("/")} icon={<Restart size={20} />}>Jogar de novo</Button>
+      <Button onClick={handleAgain} disabled={busy} icon={<Restart size={20} />}>Jogar de novo</Button>
+      {err && (
+        <p role="alert" className="flex items-center justify-center gap-2 font-bold">
+          <Alert size={20} />
+          {err}
+        </p>
+      )}
     </main>
   );
 }

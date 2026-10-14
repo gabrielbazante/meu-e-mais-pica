@@ -1,4 +1,5 @@
 import { isAuthorized } from "@/lib/keepalive";
+import { staleRoomCutoff } from "@/lib/rooms";
 import { createServerClient } from "@/lib/supabase/server";
 
 // Executa a cada requisição (nada de cache): é um cron.
@@ -32,7 +33,21 @@ export async function GET(request: Request) {
       .lt("created_at", limite);
     if (erroLimpeza) console.error("keepalive cleanup", erroLimpeza.message);
 
-    return Response.json({ ok: true, at: new Date().toISOString() });
+    // Salas "closed" (delete adiado que nao rodou) e salas com mais de 24 h; o cascade leva o resto.
+    // Falha aqui tambem nao derruba o keep-alive.
+    let roomsDeleted = 0;
+    const { data: apagadas, error: erroSalas } = await supabase
+      .from("rooms")
+      .delete()
+      .or(`status.eq.closed,created_at.lt.${staleRoomCutoff(Date.now())}`)
+      .select("id");
+    if (erroSalas) console.error("rooms cleanup", erroSalas.message);
+    else {
+      roomsDeleted = apagadas?.length ?? 0;
+      console.log("rooms cleanup", roomsDeleted);
+    }
+
+    return Response.json({ ok: true, at: new Date().toISOString(), roomsDeleted });
   } catch (e) {
     const message = e instanceof Error ? e.message : "erro inesperado";
     return Response.json({ error: message }, { status: 500 });
