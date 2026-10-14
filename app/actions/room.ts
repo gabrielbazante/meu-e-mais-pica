@@ -52,6 +52,7 @@ export async function joinRoom(
     .from("rooms").select("*").eq("code", code).maybeSingle();
   if (!room) throw new Error("Sala não encontrada");
   if (room.status === "ended") throw new Error("Esta partida já encerrou");
+  if (room.status === "closed") throw new Error("Esta sala foi encerrada");
 
   // Reconexao por nome: mesmo nome normalizado + mesma sala recupera a cadeira
   // existente (mantendo total_points e, se for a do dono, o host). NAO mutamos a

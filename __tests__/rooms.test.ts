@@ -15,3 +15,11 @@ describe("isRoomClosed", () => {
   it("status closed e encerrada", () => expect(isRoomClosed(false, { status: "closed" })).toBe(true));
   it("status ended (podio) nao e encerrada", () => expect(isRoomClosed(true, { status: "ended" })).toBe(false));
 });
+
+import { nextClosed } from "@/lib/rooms";
+describe("nextClosed", () => {
+  it("erro de rede nao encerra", () => expect(nextClosed(false, true, null, new Error("net"))).toBe(false));
+  it("sala sumida sem erro encerra", () => expect(nextClosed(false, true, null, null)).toBe(true));
+  it("e sticky", () => expect(nextClosed(true, true, { status: "playing" }, null)).toBe(true));
+  it("closed encerra", () => expect(nextClosed(false, true, { status: "closed" }, null)).toBe(true));
+});

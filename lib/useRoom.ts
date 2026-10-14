@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isRoomClosed } from "@/lib/rooms";
+import { nextClosed } from "@/lib/rooms";
 import type { RoomRow, PlayerRow, RoundRow, AnswerRow, VoteRow } from "@/lib/supabase/database.types";
 
 export interface RoomState {
@@ -22,9 +22,10 @@ export function useRoom(code: string): RoomState {
 
   const load = useCallback(async () => {
     const supabase = createClient();
-    const { data: room } = await supabase.from("rooms").select("*").eq("code", code).maybeSingle<RoomRow>();
-    const closed = isRoomClosed(existed.current, room ?? null);
-    if (!room) { setState((s) => ({ ...s, loading: false, closed })); return; }
+    const { data: room, error } = await supabase.from("rooms").select("*").eq("code", code).maybeSingle<RoomRow>();
+    // Falha de rede nao e sala sumida: mantem o ultimo estado.
+    if (error) return;
+    if (!room) { setState((s) => ({ ...s, loading: false, closed: nextClosed(s.closed, existed.current, null, null) })); return; }
     existed.current = true;
     const { data: players } = await supabase.from("players").select("*").eq("room_id", room.id).order("joined_at");
     let round: RoundRow | null = null, answers: AnswerRow[] = [], votes: VoteRow[] = [];
@@ -36,7 +37,7 @@ export function useRoom(code: string): RoomState {
         votes = (await supabase.from("votes").select("*").eq("round_id", round.id)).data ?? [];
       }
     }
-    setState({ room, players: players ?? [], round, answers, votes, loading: false, closed });
+    setState((s) => ({ room, players: players ?? [], round, answers, votes, loading: false, closed: nextClosed(s.closed, existed.current, room, null) }));
   }, [code]);
 
   const roomId = state.room?.id ?? null;

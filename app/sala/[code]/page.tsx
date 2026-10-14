@@ -25,8 +25,8 @@ export default function SalaPage({ params }: { params: Promise<{ code: string }>
   const router = useRouter();
   // Sala encerrada pelo dono: quem ainda estava nela volta para a tela inicial com aviso.
   useEffect(() => {
-    if (closed) router.replace("/?aviso=sala-encerrada");
-  }, [closed, router]);
+    if (closed) router.replace(room?.host_id === meId ? "/" : "/?aviso=sala-encerrada");
+  }, [closed, router, room, meId]);
 
   if (closed) return <Center>Sala encerrada</Center>;
   if (loading || !meId) return <Center>Carregando…</Center>;

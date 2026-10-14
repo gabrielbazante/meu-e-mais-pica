@@ -10,19 +10,21 @@ import { startGame } from "@/app/actions/game";
 import { closeRoom, leaveRoom } from "@/app/actions/room";
 import { MIN_PLAYERS } from "@/lib/game/phase";
 import { Confetti } from "@/components/ui/Confetti";
-import { Crown, Exit, Kick, Play } from "@/components/icons";
+import { Alert, Crown, Exit, Kick, Play } from "@/components/icons";
 import type { PlayerRow, RoomRow } from "@/lib/supabase/database.types";
 
 export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerRow[]; meId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   const isHost = room.host_id === meId;
   const canStart = players.length >= MIN_PLAYERS;
   const joinIndex = colorIndexByJoin(players);
 
   async function handleDelete() {
-    setBusy(true);
-    await closeRoom({ roomId: room.id, hostId: meId });
+    setBusy(true); setErr("");
+    try { await closeRoom({ roomId: room.id, hostId: meId }); }
+    catch { setErr("Não deu pra encerrar a sala. Tente de novo."); setBusy(false); return; }
     router.push("/");
   }
 
@@ -68,6 +70,12 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
           <Button disabled={busy} onClick={handleDelete} className="bg-ink! text-white" icon={<Kick size={20} />}>
             Apagar sala e sair
           </Button>
+          {err && (
+            <p role="alert" className="flex items-center justify-center gap-2 font-bold">
+              <Alert size={20} />
+              {err}
+            </p>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3">

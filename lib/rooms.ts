@@ -13,3 +13,16 @@ export function staleRoomCutoff(nowMs: number): string {
 export function isRoomClosed(prevExisted: boolean, room: { status: string } | null): boolean {
   return room?.status === "closed" || (prevExisted && room === null);
 }
+
+// Decisao de "encerrada" a cada load. Erro de rede nao e sala sumida: mantem o anterior.
+// Sticky: depois de true, continua true.
+export function nextClosed(
+  prevClosed: boolean,
+  existed: boolean,
+  room: { status: string } | null,
+  error: unknown,
+): boolean {
+  if (prevClosed) return true;
+  if (error) return false;
+  return isRoomClosed(existed, room);
+}
