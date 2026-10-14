@@ -33,13 +33,13 @@ export async function GET(request: Request) {
       .lt("created_at", limite);
     if (erroLimpeza) console.error("keepalive cleanup", erroLimpeza.message);
 
-    // Salas com mais de 24 h (encerradas ou abandonadas); o cascade leva o resto.
+    // Salas "closed" (delete adiado que nao rodou) e salas com mais de 24 h; o cascade leva o resto.
     // Falha aqui tambem nao derruba o keep-alive.
     let roomsDeleted = 0;
     const { data: apagadas, error: erroSalas } = await supabase
       .from("rooms")
       .delete()
-      .lt("created_at", staleRoomCutoff(Date.now()))
+      .or(`status.eq.closed,created_at.lt.${staleRoomCutoff(Date.now())}`)
       .select("id");
     if (erroSalas) console.error("rooms cleanup", erroSalas.message);
     else {

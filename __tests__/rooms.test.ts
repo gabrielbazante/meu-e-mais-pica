@@ -23,3 +23,8 @@ describe("nextClosed", () => {
   it("e sticky", () => expect(nextClosed(true, true, { status: "playing" }, null)).toBe(true));
   it("closed encerra", () => expect(nextClosed(false, true, { status: "closed" }, null)).toBe(true));
 });
+
+import { CLOSE_DELETE_DELAY_MS } from "@/lib/rooms";
+describe("CLOSE_DELETE_DELAY_MS", () => {
+  it("espera 5 s antes de apagar", () => expect(CLOSE_DELETE_DELAY_MS).toBe(5000));
+});

@@ -3,6 +3,10 @@
 // Salas mais velhas que isso (encerradas ou abandonadas) sao apagadas pelo cron diario.
 export const ROOM_TTL_HOURS = 24;
 
+// Atraso entre marcar a sala como "closed" e apaga-la. Apagar junto do UPDATE faz o cascade
+// remover os players antes de o Realtime entregar o evento aos clientes.
+export const CLOSE_DELETE_DELAY_MS = 5000;
+
 export function staleRoomCutoff(nowMs: number): string {
   return new Date(nowMs - ROOM_TTL_HOURS * 3_600_000).toISOString();
 }
