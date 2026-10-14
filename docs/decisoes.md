@@ -66,3 +66,10 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Motivo:** o usuário pediu um visual elegante e profissional que mantivesse a essência do tema. Emojis variam por sistema (iOS/Android) e destoam do logo. Ícones de bibliotecas como Lucide e Phosphor são de traço fino e ficariam com cara de "app genérico".
 - **Alternativas descartadas:** ilustrações com volume (B), visual clean minimalista (C), medalhas no boneco (A3) e uma biblioteca de ícones pronta.
 - **Impacto:** nenhuma dependência nova e nenhuma mudança de regra ou dados. O teste `no-emoji` impede regressões. Spec: `docs/superpowers/specs/2026-10-13-visual-icones-a2-design.md`.
+
+## 2026-10-13 — Encerrar a sala de verdade
+
+- **Decisão:** `deleteRoom` virou `closeRoom`: marca `rooms.status = "closed"` e depois apaga a sala (cascade leva o resto). O dono dispara isso em "Jogar de novo" no pódio e em "Apagar sala e sair" no lobby. Os clientes tratam `status = "closed"`, ou a sala sumir depois de já ter existido (`lib/rooms.ts`), como encerramento e vão para `/?aviso=sala-encerrada`. O cron diário apaga também salas com `created_at` de mais de 24 h.
+- **Motivo:** antes, `endGame` só marcava `ended` e tudo ficava no banco para sempre; e o Realtime não entrega DELETE em assinaturas com filtro, então o simples delete não avisava os outros jogadores (mesma causa do `touchRoom` no kick). O UPDATE antes do DELETE é o que dispara o aviso.
+- **Alternativas descartadas:** apagar já em `endGame` (tiraria o pódio de quem ainda o olha); só depender do cron (dados ficam até 24 h e sem aviso).
+- **Impacto:** sem migração (`rooms.status` é `text` sem constraint). O pódio some depois que o dono sai dele; o aviso na home é lido de `window.location.search` via `useSyncExternalStore`, evitando `Suspense`. Se o UPDATE se perder, o cliente ainda detecta pelo sumiço da sala no próximo reload.
