@@ -90,11 +90,18 @@ export async function joinRoom(
   return { code, playerId: seatId };
 }
 
-export async function deleteRoom(input: { roomId: string; hostId: string }) {
+// Encerra de verdade: avisa todos e apaga a sala (cascade leva jogadores, rodadas, etc).
+// Idempotente: sala inexistente retorna sem erro.
+export async function closeRoom(input: { roomId: string; hostId: string }) {
   const supabase = createServerClient();
   const { data: room } = await supabase
     .from("rooms").select("host_id").eq("id", input.roomId).maybeSingle();
-  if (!room || room.host_id !== input.hostId) throw new Error("Sem permissão");
+  if (!room) return;
+  if (room.host_id !== input.hostId) throw new Error("Sem permissão");
+  // O UPDATE vem antes do DELETE porque o Realtime nao entrega DELETE em assinaturas
+  // com filtro; o UPDATE para "closed" e o que faz os clientes saberem do encerramento.
+  const { error: uErr } = await supabase.from("rooms").update({ status: "closed" }).eq("id", input.roomId);
+  if (uErr) throw new Error(uErr.message);
   const { error } = await supabase.from("rooms").delete().eq("id", input.roomId);
   if (error) throw new Error(error.message);
 }

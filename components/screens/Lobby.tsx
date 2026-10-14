@@ -7,7 +7,7 @@ import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { InviteShare } from "@/components/ui/InviteShare";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import { startGame } from "@/app/actions/game";
-import { deleteRoom, leaveRoom } from "@/app/actions/room";
+import { closeRoom, leaveRoom } from "@/app/actions/room";
 import { MIN_PLAYERS } from "@/lib/game/phase";
 import { Confetti } from "@/components/ui/Confetti";
 import { Crown, Exit, Kick, Play } from "@/components/icons";
@@ -22,7 +22,7 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
 
   async function handleDelete() {
     setBusy(true);
-    await deleteRoom({ roomId: room.id, hostId: meId });
+    await closeRoom({ roomId: room.id, hostId: meId });
     router.push("/");
   }
 

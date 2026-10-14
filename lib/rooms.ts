@@ -1,0 +1,15 @@
+// Regras puras de ciclo de vida da sala.
+
+// Salas mais velhas que isso (encerradas ou abandonadas) sao apagadas pelo cron diario.
+export const ROOM_TTL_HOURS = 24;
+
+export function staleRoomCutoff(nowMs: number): string {
+  return new Date(nowMs - ROOM_TTL_HOURS * 3_600_000).toISOString();
+}
+
+// O Realtime nao entrega DELETE com filtro, entao o cliente so descobre o fim da sala
+// pelo status "closed" ou, se perdeu esse UPDATE, por a sala ter sumido depois de existir.
+// Sala que nunca existiu e "nao encontrada", nao "encerrada".
+export function isRoomClosed(prevExisted: boolean, room: { status: string } | null): boolean {
+  return room?.status === "closed" || (prevExisted && room === null);
+}

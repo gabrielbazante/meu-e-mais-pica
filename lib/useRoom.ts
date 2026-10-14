@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isRoomClosed } from "@/lib/rooms";
 import type { RoomRow, PlayerRow, RoundRow, AnswerRow, VoteRow } from "@/lib/supabase/database.types";
 
 export interface RoomState {
@@ -10,17 +11,21 @@ export interface RoomState {
   answers: AnswerRow[];
   votes: VoteRow[];
   loading: boolean;
+  closed: boolean;
 }
 
 export function useRoom(code: string): RoomState {
   const [state, setState] = useState<RoomState>({
-    room: null, players: [], round: null, answers: [], votes: [], loading: true,
+    room: null, players: [], round: null, answers: [], votes: [], loading: true, closed: false,
   });
+  const existed = useRef(false);
 
   const load = useCallback(async () => {
     const supabase = createClient();
     const { data: room } = await supabase.from("rooms").select("*").eq("code", code).maybeSingle<RoomRow>();
-    if (!room) { setState((s) => ({ ...s, loading: false })); return; }
+    const closed = isRoomClosed(existed.current, room ?? null);
+    if (!room) { setState((s) => ({ ...s, loading: false, closed })); return; }
+    existed.current = true;
     const { data: players } = await supabase.from("players").select("*").eq("room_id", room.id).order("joined_at");
     let round: RoundRow | null = null, answers: AnswerRow[] = [], votes: VoteRow[] = [];
     if (room.current_round_id) {
@@ -31,7 +36,7 @@ export function useRoom(code: string): RoomState {
         votes = (await supabase.from("votes").select("*").eq("round_id", round.id)).data ?? [];
       }
     }
-    setState({ room, players: players ?? [], round, answers, votes, loading: false });
+    setState({ room, players: players ?? [], round, answers, votes, loading: false, closed });
   }, [code]);
 
   const roomId = state.room?.id ?? null;
