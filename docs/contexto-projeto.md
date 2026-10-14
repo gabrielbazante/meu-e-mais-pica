@@ -19,5 +19,10 @@ Jogo de festa multiplayer (Next.js + Supabase). A branch `feat/ajustes-playtest`
 - `npm run build`: build de produção e checagem de tipos.
 - QA manual na preview com 2+ abas (3+ jogadores para iniciar): contagem sincronizada, desempate duplo, expulsar (inclusive candidato de desempate), reconexão pelo nome (inclusive do dono), marcar repetida e ranking animado.
 
+## Visual
+- Visual A2: identidade do logo (cores `logo-*` e utilitários `text-logo`, `sticker` e `pill` em `app/globals.css`).
+- Ícones SVG próprios em `components/icons/`; a interface não usa emoji (travado por `__tests__/no-emoji.test.ts`).
+- Texto sobre rosa do logo usa `text-ink` (contraste AA); sobre roxo usa branco.
+
 ## Pendências para o usuário decidir
-Nenhuma no momento.
+- Seguimento: o campo de nome do JoinSeat (`app/sala/[code]/page.tsx`) não tem `maxLength={16}`, e `joinRoom`/`createRoom` não validam o tamanho do nome no servidor.

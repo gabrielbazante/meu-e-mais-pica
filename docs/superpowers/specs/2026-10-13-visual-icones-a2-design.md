@@ -1,7 +1,7 @@
 # Visual A2: ícones próprios e identidade do logo — Design
 
 **Data:** 2026-10-13
-**Status:** Design aprovado pelo usuário no chat. Spec escrita, aguardando revisão.
+**Status:** Aprovada pelo usuário; implementada na branch feat/visual-icones-a2
 **Branch:** `feat/visual-icones-a2`, com PR direto para `main`.
 
 ## Objetivo
