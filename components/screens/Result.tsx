@@ -45,8 +45,8 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
           <section className="flex w-full flex-col items-center gap-2">
             <Flame size={52} />
             <LogoTitle as="h2" size="md">O mais pica</LogoTitle>
-            <p className="break-words font-display text-3xl font-extrabold">{nameOf(bestId)}</p>
-            <Card className="w-full break-words !bg-logo-pink font-bold text-white">
+            <p className="[overflow-wrap:anywhere] font-display text-3xl font-extrabold">{nameOf(bestId)}</p>
+            <Card className="w-full [overflow-wrap:anywhere] !bg-logo-pink font-bold text-ink">
               {textOf(bestId)} <span className="opacity-85">· {votesLabel(countFor(bestId, "best_id"))}</span>
             </Card>
           </section>
@@ -60,8 +60,8 @@ export function Result({ room, round, players, answers, votes, meId, isHost }: {
               <>
                 <Tomato size={46} />
                 <LogoTitle as="h2" size="sm">O pior</LogoTitle>
-                <p className="break-words font-display text-2xl font-extrabold">{nameOf(worstId)}</p>
-                <Card className="w-full break-words !bg-logo-purple font-bold text-white">
+                <p className="[overflow-wrap:anywhere] font-display text-2xl font-extrabold">{nameOf(worstId)}</p>
+                <Card className="w-full [overflow-wrap:anywhere] !bg-logo-purple font-bold text-white">
                   {textOf(worstId)} <span className="opacity-85">· {votesLabel(countFor(worstId, "worst_id"))}</span>
                 </Card>
               </>

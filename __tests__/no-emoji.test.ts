@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 // Emoji e pictogramas que não devem aparecer na interface (o app usa ícones SVG próprios).
-const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2705}\u{2713}\u{2190}-\u{21FF}\u{23E9}-\u{23FA}\u{25B6}]/u;
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2705}\u{2713}\u{2190}-\u{21FF}\u{23E9}-\u{23FA}\u{25B6}\u{D7}\u{2300}-\u{23FF}\u{25A0}-\u{25FF}\u{2B00}-\u{2BFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}]/u;
 
 function tsxFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

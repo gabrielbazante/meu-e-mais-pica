@@ -53,7 +53,7 @@ function Step({ player, rank, colorIndex }: { player?: PlayerRow; rank: 1 | 2 | 
         )}
         <BlockAvatar seed={player.id} size={48} colorIndex={colorIndex} />
       </div>
-      <span className="w-full break-words font-extrabold leading-tight">{player.name}</span>
+      <span className="w-full [overflow-wrap:anywhere] font-extrabold leading-tight">{player.name}</span>
       <div
         data-rank={rank}
         className={`${s.h} ${s.bg} flex w-full flex-col items-center justify-start gap-1 rounded-t-2xl rounded-b-lg border-3 border-ink pt-2 shadow-chunky`}

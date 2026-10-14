@@ -45,11 +45,11 @@ export function Lobby({ room, players, meId }: { room: RoomRow; players: PlayerR
       <Card className="flex flex-col gap-2">
         <p className="font-display font-extrabold">Jogadores ({players.length})</p>
         {players.map((p) => (
-          <div key={p.id} className="flex items-center gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
+          <div key={p.id} className="flex min-w-0 items-center gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
             <BlockAvatar seed={p.id} size={32} colorIndex={joinIndex.get(p.id)} />
-            <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
-              {p.name}
-              {p.id === room.host_id && <Crown size={20} title="dono da sala" />}
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <span className="min-w-0 [overflow-wrap:anywhere]">{p.name}</span>
+              {p.id === room.host_id && <Crown size={20} title="dono da sala" className="flex-none" />}
             </span>
           </div>
         ))}

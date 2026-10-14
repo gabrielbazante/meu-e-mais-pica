@@ -70,7 +70,7 @@ export function Fill({ round, room, players, answers, meId, isHost }: {
           <p className="break-words font-display text-xl font-extrabold text-logo-blue">{round.theme ?? ""}</p>
         </Card>
         <div className="rounded-2xl border-3 border-ink bg-logo-pink px-4 py-2 text-center shadow-chunkySm">
-          <p className="text-xs font-bold uppercase tracking-wider text-white">Letra</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-ink">Letra</p>
           <p className="text-logo font-display text-4xl font-extrabold leading-none">{round.letter ?? ""}</p>
         </div>
       </div>

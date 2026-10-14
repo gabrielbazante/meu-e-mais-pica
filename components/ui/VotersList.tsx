@@ -12,7 +12,7 @@ export function VotersList({ players, votes, isTiebreak }: {
       <p className="font-display font-extrabold">Quem já votou ({voted.size}/{players.length})</p>
       {players.map((p) => (
         <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
-          <span className="min-w-0 break-words">{p.name}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere]">{p.name}</span>
           {voted.has(p.id)
             ? <Check size={24} title="votou" />
             : <span className="sr-only">ainda não votou</span>}

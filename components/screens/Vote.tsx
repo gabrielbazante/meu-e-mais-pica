@@ -41,7 +41,7 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
   const worstPick = tiebreak && kind === "worst";
   const pickLabel = worstPick ? "Pior" : "Mais pica";
   const pickIcon = worstPick ? <Tomato size={20} /> : <Flame size={20} />;
-  const pickColor = worstPick ? "bg-logo-purple text-white" : "bg-logo-pink text-white";
+  const pickColor = worstPick ? "bg-logo-purple text-white" : "bg-logo-pink text-ink";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-5">
@@ -73,7 +73,7 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
           <Card key={a.player_id} className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <BlockAvatar seed={a.player_id} size={32} colorIndex={joinIndex.get(a.player_id)} />
-              <span className="min-w-0 break-words font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere] font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
               {flagged && (
                 <span className="ml-auto inline-flex flex-none items-center gap-1 text-xs font-bold text-party-red">
                   <Alert size={16} />
@@ -81,7 +81,7 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
                 </span>
               )}
             </div>
-            <p className="break-words rounded-lg border-2 border-ink bg-cream px-3 py-2 font-bold">{a.text}</p>
+            <p className="[overflow-wrap:anywhere] rounded-lg border-2 border-ink bg-cream px-3 py-2 font-bold">{a.text}</p>
 
             {isHost && !tiebreak && !self && (
               <button

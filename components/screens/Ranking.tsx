@@ -62,7 +62,7 @@ export function Ranking({ players, deltas }: { players: PlayerRow[]; deltas?: Re
                 : <span className="font-display text-xl font-extrabold">{i + 1}º</span>}
             </span>
             <BlockAvatar seed={p.id} size={40} colorIndex={joinIndex.get(p.id)} />
-            <span className="min-w-0 flex-1 break-words font-extrabold">{p.name}</span>
+            <span className="min-w-0 flex-1 [overflow-wrap:anywhere] font-extrabold">{p.name}</span>
             {deltas && (
               <span className={"font-display text-sm font-black " + (d > 0 ? "text-party-teal" : d < 0 ? "text-party-red" : "opacity-40")}>
                 {d > 0 ? `+${d}` : d}

@@ -27,17 +27,17 @@ export function ManagePlayers({ roomId, players, meId, hostId }: {
         <Card className="flex flex-col gap-2">
           <p className="font-display font-extrabold">Gerenciar jogadores</p>
           {players.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
-              <span className="inline-flex min-w-0 items-center gap-1.5 break-words">
-                {p.name}
-                {p.id === hostId && <Crown size={20} title="dono da sala" />}
+            <div key={p.id} className="flex min-w-0 items-center justify-between gap-2 rounded-xl bg-party-yellow/40 px-3 py-2 font-bold">
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <span className="min-w-0 [overflow-wrap:anywhere]">{p.name}</span>
+                {p.id === hostId && <Crown size={20} title="dono da sala" className="flex-none" />}
               </span>
               {p.id !== hostId && (
                 <button
                   type="button"
                   disabled={busy}
                   aria-label={`Expulsar ${p.name}`}
-                  className="rounded-full disabled:opacity-50"
+                  className="flex-none rounded-full p-1.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50"
                   onClick={async () => {
                     setBusy(true);
                     try {
