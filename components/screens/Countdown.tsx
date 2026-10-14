@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { beginRound } from "@/app/actions/game";
 import { Flame } from "@/components/icons";
+import { countdownView } from "@/lib/game/phase";
 import type { RoundRow } from "@/lib/supabase/database.types";
 
 // Intervalo entre tentativas de beginRound quando a contagem chegou a zero.
@@ -10,7 +11,7 @@ import type { RoundRow } from "@/lib/supabase/database.types";
 const RETRY_MS = 1000;
 
 export function Countdown({ round }: { round: RoundRow }) {
-  const [left, setLeft] = useState(3);
+  const [view, setView] = useState<ReturnType<typeof countdownView>>({ kind: "prep" });
   // Refs (não state) guardam o controle de chamadas: não disparam re-render
   // e não entram nas deps do efeito.
   const inFlight = useRef(false);
@@ -35,9 +36,9 @@ export function Countdown({ round }: { round: RoundRow }) {
     };
 
     const tick = () => {
-      const s = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-      setLeft(s);
-      if (s === 0 && !inFlight.current && Date.now() - lastCallAt.current >= RETRY_MS) {
+      const v = countdownView(end, Date.now());
+      setView(v);
+      if (v.kind === "go" && !inFlight.current && Date.now() - lastCallAt.current >= RETRY_MS) {
         void call();
       }
     };
@@ -50,9 +51,11 @@ export function Countdown({ round }: { round: RoundRow }) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       <p className="font-display text-xl font-extrabold opacity-70">Preparando…</p>
-      {left > 0
-        ? <p className="text-logo font-display text-[8rem] font-extrabold leading-none">{left}</p>
-        : <Flame size={128} title="Valendo!" />}
+      {view.kind === "prep" && <div className="h-[8rem]" aria-hidden="true" />}
+      {view.kind === "number" && (
+        <p className="text-logo font-display text-[8rem] font-extrabold leading-none">{view.n}</p>
+      )}
+      {view.kind === "go" && <Flame size={128} title="Valendo!" />}
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { drawRound } from "@/lib/game/draw";
-import { FILL_SECONDS, COUNTDOWN_SECONDS, fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
+import { FILL_SECONDS, countdownStartsAt, fillPhaseComplete, votePhaseComplete } from "@/lib/game/phase";
 import { roundDeltas } from "@/lib/game/scoring";
 import { tallyRound, worstIdsExcluding } from "@/lib/game/tally";
 import { aliveCandidates, resolveTiebreak } from "@/lib/game/tiebreak";
@@ -16,7 +16,7 @@ export async function assertHost(supabase: SB, roomId: string, playerId: string)
 
 // Cria a próxima rodada já em contagem (tema/letra ficam null até o fim da contagem).
 export async function createCountdownRound(supabase: SB, roomId: string) {
-  const startsAt = new Date(Date.now() + COUNTDOWN_SECONDS * 1000).toISOString();
+  const startsAt = countdownStartsAt(Date.now());
   const { data: round, error } = await supabase
     .from("rounds")
     .insert({ room_id: roomId, phase: "contagem", starts_at: startsAt })
