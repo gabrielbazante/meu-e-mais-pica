@@ -67,6 +67,13 @@ Todas as decisões abaixo são de 2026-10-13 (ajustes pós-playtest, branch `fea
 - **Alternativas descartadas:** ilustrações com volume (B), visual clean minimalista (C), medalhas no boneco (A3) e uma biblioteca de ícones pronta.
 - **Impacto:** nenhuma dependência nova e nenhuma mudança de regra ou dados. O teste `no-emoji` impede regressões. Spec: `docs/superpowers/specs/2026-10-13-visual-icones-a2-design.md`.
 
+## 2026-10-13 — Contagem 3-2-1 com folga antes do 3
+
+- **Decisão:** `starts_at` passa a ser `agora + 2,5 s (COUNTDOWN_LEAD_MS) + 3 s`, via `countdownStartsAt` em `lib/game/phase.ts`. Enquanto faltam mais de 3 s, o `Countdown` mostra só "Preparando…" (`countdownView`), e o 3-2-1 começa quando restam 3 s.
+- **Causa:** o servidor calculava `starts_at = agora + 3 s` antes de gravar a rodada (INSERT, UPDATE em `rooms`, cada um um round trip Vercel iad1 para Supabase em São Paulo). Depois o Realtime e o `load()` do `useRoom` (5 consultas sequenciais, 0,35 a 0,78 s cada) consumiam cerca de 2 s, e o jogador via só o "1" e a chama.
+- **Alternativa futura:** paralelizar as consultas do `load()` do `useRoom`, reduzindo a latência em vez de só compensá-la.
+- **Impacto:** a contagem dura 2,5 s a mais até aparecer o 3. Lógica de retry do `beginRound` inalterada.
+
 ## 2026-10-13 — Encerrar a sala de verdade
 
 - **Decisão:** `deleteRoom` virou `closeRoom`: marca `rooms.status = "closed"` e depois apaga a sala (cascade leva o resto). O dono dispara isso em "Jogar de novo" no pódio e em "Apagar sala e sair" no lobby. Os clientes tratam `status = "closed"`, ou a sala sumir depois de já ter existido (`lib/rooms.ts`), como encerramento e vão para `/?aviso=sala-encerrada`. O cron diário apaga também salas com `created_at` de mais de 24 h.
