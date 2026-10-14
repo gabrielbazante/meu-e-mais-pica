@@ -1,6 +1,6 @@
 "use server";
 import { createServerClient } from "@/lib/supabase/server";
-import { canStart, COUNTDOWN_SECONDS } from "@/lib/game/phase";
+import { canStart, countdownStartsAt } from "@/lib/game/phase";
 import { isDuplicateLater } from "@/lib/game/dedup";
 import {
   assertHost, createCountdownRound, beginRoundCore, maybeAdvanceFromFill, maybeTally,
@@ -28,7 +28,7 @@ export async function dismissRules(input: { roundId: string; playerId: string })
     .from("rounds").select("room_id,phase").eq("id", input.roundId).single();
   if (!round || round.phase !== "regras") return;
   await assertHost(supabase, round.room_id, input.playerId);
-  const startsAt = new Date(Date.now() + COUNTDOWN_SECONDS * 1000).toISOString();
+  const startsAt = countdownStartsAt(Date.now());
   await supabase.from("rounds")
     .update({ phase: "contagem", starts_at: startsAt })
     .eq("id", input.roundId).eq("phase", "regras");
