@@ -106,4 +106,31 @@ describe("Vote (anônimo)", () => {
     expect(html).not.toContain("chegou");
     expect(html).toContain("parece repetida?");
   });
+
+  it("no desempate o dono não vê o selo 'chegou'", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const tb = { ...round, phase: "desempate", tiebreak_kind: "best", tiebreak_candidates: ["2", "3"] } as unknown as RoundRow;
+    const html = renderToStaticMarkup(
+      <Vote round={tb} players={ps} answers={similar} votes={[]} meId="1" isHost roomId="r" />,
+    );
+    expect(html).not.toContain("chegou");
+  });
+
+  it("com uma única opção votável: sem 'Pior' e com a dica", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={[ans("1", "Gato"), ans("2", "Peixe")]} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).not.toContain("Pior");
+    expect(html).toContain("Só sobrou uma resposta pra você votar: escolha o mais pica.");
+  });
+
+  it("liga os botões à resposta com aria-describedby", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={[ans("1", "Gato"), ans("2", "Peixe"), ans("3", "Zebra")]} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).toContain('id="answer-0"');
+    expect(html).toContain('aria-describedby="answer-0"');
+  });
 });

@@ -1,32 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { shuffleBySeed } from "@/lib/game/shuffle";
+import { orderBySeed } from "@/lib/game/shuffle";
 
-const items = Array.from({ length: 10 }, (_, i) => i);
+const keys = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const items = keys.map((id) => ({ id }));
+const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
+const by = (x: { id: string }) => x.id;
 
-describe("shuffleBySeed", () => {
-  it("a mesma semente dá a mesma ordem", () => {
-    expect(shuffleBySeed(items, "rodada-1")).toEqual(shuffleBySeed(items, "rodada-1"));
+describe("orderBySeed", () => {
+  it("a mesma lista em outra ordem de entrada dá a mesma saída", () => {
+    expect(ids(orderBySeed([...items].reverse(), "r", by))).toEqual(ids(orderBySeed(items, "r", by)));
   });
 
-  it("é uma permutação: mesmos elementos e tamanho", () => {
-    const out = shuffleBySeed(items, "x");
-    expect(out).toHaveLength(items.length);
-    expect([...out].sort((a, b) => a - b)).toEqual(items);
+  it("remover um item mantém a ordem relativa dos demais", () => {
+    const full = ids(orderBySeed(items, "r", by));
+    const without = ids(orderBySeed(items.filter((x) => x.id !== "d"), "r", by));
+    expect(without).toEqual(full.filter((x) => x !== "d"));
   });
 
-  it("não muta o array original", () => {
+  it("é determinístico e não muta a entrada", () => {
     const copy = [...items];
-    shuffleBySeed(items, "x");
+    expect(orderBySeed(items, "r", by)).toEqual(orderBySeed(items, "r", by));
     expect(items).toEqual(copy);
   });
 
-  it("sementes diferentes dão ordens diferentes", () => {
-    const pairs: [string, string][] = [["a", "b"], ["r1", "r2"], ["x", "y"], ["um", "dois"], ["s1", "s2"]];
-    const some = pairs.some(([p, q]) => shuffleBySeed(items, p).join() !== shuffleBySeed(items, q).join());
-    expect(some).toBe(true);
+  it("é uma permutação (sem perda)", () => {
+    expect(ids(orderBySeed(items, "r", by)).sort()).toEqual(keys);
   });
 
-  it("array vazio retorna array vazio", () => {
-    expect(shuffleBySeed([], "x")).toEqual([]);
+  it("sementes diferentes mudam o primeiro elemento (não é só ordenar pela chave)", () => {
+    const first0 = orderBySeed(items, "seed0", by)[0].id;
+    const diff = ["s1", "s2", "s3", "s4", "s5"].filter((s) => orderBySeed(items, s, by)[0].id !== first0);
+    expect(diff.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("lista vazia retorna vazia", () => {
+    expect(orderBySeed([], "x", by)).toEqual([]);
   });
 });
