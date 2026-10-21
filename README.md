@@ -15,6 +15,7 @@ Cada rodada sorteia um **tema** e uma **letra**. Todo mundo escreve a melhor res
 5. Rola uma **contagem 3-2-1** igual para todo mundo. O tema só aparece quando a rodada começa, então ninguém sai na frente.
 6. Você tem **1 minuto** para responder. Não vale repetir palavra que já foi usada.
 7. Todos votam no **mais pica** e no **pior** (não dá para votar em si mesmo). Depois de votar, você vê a lista de quem já votou.
+   Na votação as respostas aparecem **sem o nome do autor** e embaralhadas, para o voto ser imparcial; o autor só é revelado no resultado. O dono vê, nas respostas parecidas, qual chegou primeiro ("chegou 1º", "chegou 2º"): pela regra do jogo, fica a que chegou primeiro.
 8. **Empatou?** Rola desempate: primeiro para o melhor, depois para o pior, um de cada vez. Se o desempate do melhor continuar empatado, vence quem respondeu primeiro; no do pior, perde quem respondeu por último (rapidez protege dos dois lados).
    - **Mais pica e pior nunca são a mesma pessoa:** o pior é apurado sem contar o vencedor do melhor. Se ninguém além dele recebeu voto de pior, a rodada fica sem pior.
 9. O **resultado** mostra o mais pica e o pior com a quantidade de votos de cada, e um ranking animado com os pontos que cada jogador fez na rodada.
