@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { PlayerRow, VoteRow } from "@/lib/supabase/database.types";
+import type { AnswerRow, PlayerRow, RoundRow, VoteRow } from "@/lib/supabase/database.types";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/app/actions/room", () => ({ closeRoom: vi.fn() }));
+vi.mock("@/app/actions/game", () => ({ castVote: vi.fn(), voidAnswer: vi.fn() }));
 
 const room = { id: "r", host_id: "1" };
 
@@ -59,5 +60,77 @@ describe("Podium", () => {
     expect(html).toContain('data-rank="1"');
     expect(html).toContain('data-rank="2"');
     expect(html).not.toContain('data-rank="3"');
+  });
+});
+
+describe("Vote (anônimo)", () => {
+  const round = {
+    id: "round-1", phase: "votacao", theme: "Time", letter: "M", tiebreak_kind: null, tiebreak_candidates: [],
+  } as unknown as RoundRow;
+  const ps = [player("1", "Ana"), player("2", "Bia"), player("3", "Caio")];
+  const ans = (player_id: string, text: string, submitted_at = "2026-10-13T00:00:10Z") =>
+    ({ round_id: "round-1", player_id, text, voided: false, submitted_at }) as unknown as AnswerRow;
+
+  it("não mostra o nome dos autores, rotula a própria resposta e mostra os textos", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={[ans("1", "Gato"), ans("2", "Peixe"), ans("3", "Zebra")]}
+        votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).not.toContain("Bia");
+    expect(html).not.toContain("Caio");
+    expect(html).toContain("Sua resposta");
+    for (const t of ["Gato", "Peixe", "Zebra"]) expect(html).toContain(t);
+  });
+
+  const similar = [
+    ans("2", "Manchester United", "2026-10-13T00:00:20Z"),
+    ans("3", "Man United", "2026-10-13T00:00:10Z"),
+  ];
+
+  it("dono vê a ordem de chegada e o rótulo de quem chegou depois", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={similar} votes={[]} meId="1" isHost roomId="r" />,
+    );
+    expect(html).toContain("chegou 1º");
+    expect(html).toContain("chegou 2º");
+    expect(html).toContain("marcar repetida (chegou depois)");
+  });
+
+  it("quem não é dono vê só a dica, sem ordem de chegada", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={similar} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).not.toContain("chegou");
+    expect(html).toContain("parece repetida?");
+  });
+
+  it("no desempate o dono não vê o selo 'chegou'", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const tb = { ...round, phase: "desempate", tiebreak_kind: "best", tiebreak_candidates: ["2", "3"] } as unknown as RoundRow;
+    const html = renderToStaticMarkup(
+      <Vote round={tb} players={ps} answers={similar} votes={[]} meId="1" isHost roomId="r" />,
+    );
+    expect(html).not.toContain("chegou");
+  });
+
+  it("com uma única opção votável: sem 'Pior' e com a dica", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={[ans("1", "Gato"), ans("2", "Peixe")]} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).not.toContain("Pior");
+    expect(html).toContain("Só sobrou uma resposta pra você votar: escolha o mais pica.");
+  });
+
+  it("liga os botões à resposta com aria-describedby", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={[ans("1", "Gato"), ans("2", "Peixe"), ans("3", "Zebra")]} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).toContain('id="answer-0"');
+    expect(html).toContain('aria-describedby="answer-0"');
   });
 });
