@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import { VotersList } from "@/components/ui/VotersList";
-import { BlockAvatar, colorIndexByJoin } from "@/components/ui/BlockAvatar";
 import { castVote, voidAnswer } from "@/app/actions/game";
 import { possibleDuplicates } from "@/lib/game/similarity";
+import { shuffleBySeed } from "@/lib/game/shuffle";
 import { LogoTitle } from "@/components/ui/LogoTitle";
 import { Alert, Flame, Scale, Target, Tomato } from "@/components/icons";
 import type { AnswerRow, PlayerRow, RoundRow, VoteRow } from "@/lib/supabase/database.types";
@@ -26,12 +26,12 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
   const sent = !!myVote || pending;
   const [voiding, setVoiding] = useState(false);
 
-  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
-  const joinIndex = colorIndexByJoin(players);
-
   // candidatos: respostas nao-vazias e nao anuladas; no desempate, so os empatados
   const live = answers.filter((a) => a.text.trim() !== "" && !a.voided);
   const candidates = tiebreak ? live.filter((a) => round.tiebreak_candidates.includes(a.player_id)) : live;
+
+  // ordem embaralhada pela rodada: igual para todos e estavel entre re-renders
+  const ordered = shuffleBySeed(candidates, round.id);
 
   const dupFlags = possibleDuplicates(candidates.map((a) => ({ playerId: a.player_id, text: a.text })));
 
@@ -66,21 +66,22 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
         </div>
       </header>
 
-      {candidates.map((a) => {
+      {ordered.map((a) => {
         const self = a.player_id === meId;
         const flagged = dupFlags.has(a.player_id);
         return (
           <Card key={a.player_id} className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <BlockAvatar seed={a.player_id} size={32} colorIndex={joinIndex.get(a.player_id)} />
-              <span className="min-w-0 [overflow-wrap:anywhere] font-extrabold">{nameOf(a.player_id)}{self && " (você)"}</span>
-              {flagged && (
-                <span className="ml-auto inline-flex flex-none items-center gap-1 text-xs font-bold text-party-red">
-                  <Alert size={16} />
-                  parece repetida?
-                </span>
-              )}
-            </div>
+            {(self || flagged) && (
+              <div className="flex items-center gap-2">
+                {self && <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sua resposta</span>}
+                {flagged && (
+                  <span className="ml-auto inline-flex flex-none items-center gap-1 text-xs font-bold text-party-red">
+                    <Alert size={16} />
+                    parece repetida?
+                  </span>
+                )}
+              </div>
+            )}
             <p className="[overflow-wrap:anywhere] rounded-lg border-2 border-ink bg-cream px-3 py-2 font-bold">{a.text}</p>
 
             {isHost && !tiebreak && !self && (
@@ -88,7 +89,7 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
                 disabled={voiding}
                 className="self-start rounded-lg border-3 border-ink bg-white px-2 py-1 text-xs font-bold disabled:opacity-50"
                 onClick={async () => {
-                  if (!window.confirm(`Marcar a resposta de ${nameOf(a.player_id)} como repetida? Ela sai da votação.`)) return;
+                  if (!window.confirm(`Marcar "${a.text}" como repetida? Ela sai da votação.`)) return;
                   setVoiding(true);
                   try {
                     await voidAnswer({ roundId: round.id, hostId: meId, targetId: a.player_id });
