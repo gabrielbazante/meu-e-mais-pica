@@ -82,4 +82,28 @@ describe("Vote (anônimo)", () => {
     expect(html).toContain("Sua resposta");
     for (const t of ["Gato", "Peixe", "Zebra"]) expect(html).toContain(t);
   });
+
+  const similar = [
+    ans("2", "Manchester United", "2026-10-13T00:00:20Z"),
+    ans("3", "Man United", "2026-10-13T00:00:10Z"),
+  ];
+
+  it("dono vê a ordem de chegada e o rótulo de quem chegou depois", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={similar} votes={[]} meId="1" isHost roomId="r" />,
+    );
+    expect(html).toContain("chegou 1º");
+    expect(html).toContain("chegou 2º");
+    expect(html).toContain("marcar repetida (chegou depois)");
+  });
+
+  it("quem não é dono vê só a dica, sem ordem de chegada", async () => {
+    const { Vote } = await import("@/components/screens/Vote");
+    const html = renderToStaticMarkup(
+      <Vote round={round} players={ps} answers={similar} votes={[]} meId="1" isHost={false} roomId="r" />,
+    );
+    expect(html).not.toContain("chegou");
+    expect(html).toContain("parece repetida?");
+  });
 });

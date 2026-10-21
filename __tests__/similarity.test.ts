@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { possibleDuplicates } from "@/lib/game/similarity";
+import { possibleDuplicates, duplicateGroups } from "@/lib/game/similarity";
 
 describe("possibleDuplicates", () => {
   it("sinaliza 'Manchester United' x 'Man United' (compartilham 'united')", () => {
@@ -43,5 +43,43 @@ describe("possibleDuplicates", () => {
       { playerId: "b", text: "" },
     ]);
     expect(flagged.size).toBe(0);
+  });
+});
+
+describe("duplicateGroups", () => {
+  it("agrupa 'Manchester United' x 'Man United' em ordem de chegada", () => {
+    expect(duplicateGroups([
+      { playerId: "a", text: "Manchester United", submittedAt: 200 },
+      { playerId: "b", text: "Man United", submittedAt: 100 },
+    ])).toEqual([["b", "a"]]);
+  });
+
+  it("cadeia A~B, B~C com A≁C vira um grupo só, por horário", () => {
+    expect(duplicateGroups([
+      { playerId: "c", text: "Real Madrid", submittedAt: 30 },
+      { playerId: "a", text: "Barcelona Santos", submittedAt: 10 },
+      { playerId: "b", text: "Santos Madrid", submittedAt: 20 },
+    ])).toEqual([["a", "b", "c"]]);
+  });
+
+  it("respostas sem relação retornam []", () => {
+    expect(duplicateGroups([
+      { playerId: "a", text: "Gato", submittedAt: 1 },
+      { playerId: "b", text: "Peixe", submittedAt: 2 },
+    ])).toEqual([]);
+  });
+
+  it("empate de horário desempata por playerId", () => {
+    expect(duplicateGroups([
+      { playerId: "z", text: "Man United", submittedAt: 5 },
+      { playerId: "m", text: "Manchester United", submittedAt: 5 },
+    ])).toEqual([["m", "z"]]);
+  });
+
+  it("ignora texto vazio", () => {
+    expect(duplicateGroups([
+      { playerId: "a", text: "", submittedAt: 1 },
+      { playerId: "b", text: "", submittedAt: 2 },
+    ])).toEqual([]);
   });
 });

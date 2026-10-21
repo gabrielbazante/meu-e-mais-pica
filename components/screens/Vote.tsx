@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { ManagePlayers } from "@/components/ui/ManagePlayers";
 import { VotersList } from "@/components/ui/VotersList";
 import { castVote, voidAnswer } from "@/app/actions/game";
-import { possibleDuplicates } from "@/lib/game/similarity";
+import { duplicateGroups } from "@/lib/game/similarity";
 import { shuffleBySeed } from "@/lib/game/shuffle";
 import { LogoTitle } from "@/components/ui/LogoTitle";
 import { Alert, Flame, Scale, Target, Tomato } from "@/components/icons";
@@ -33,7 +33,9 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
   // ordem embaralhada pela rodada: igual para todos e estavel entre re-renders
   const ordered = shuffleBySeed(candidates, round.id);
 
-  const dupFlags = possibleDuplicates(candidates.map((a) => ({ playerId: a.player_id, text: a.text })));
+  // grupos de respostas parecidas, em ordem de chegada (1o do grupo = quem chegou primeiro)
+  const groups = duplicateGroups(candidates.map((a) => ({ playerId: a.player_id, text: a.text, submittedAt: new Date(a.submitted_at).getTime() })));
+  const groupOf = (id: string) => groups.find((g) => g.includes(id));
 
   // escolhas que sairam da lista (anulada/expulso) nao contam
   const isCandidate = (id: string | null) => !!id && candidates.some((a) => a.player_id === id);
@@ -68,16 +70,22 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
 
       {ordered.map((a) => {
         const self = a.player_id === meId;
-        const flagged = dupFlags.has(a.player_id);
+        const group = groupOf(a.player_id);
+        const flagged = !!group;
+        const arrival = group ? group.indexOf(a.player_id) + 1 : 0;
+        const showOrder = isHost && !tiebreak && flagged;
         return (
           <Card key={a.player_id} className="flex flex-col gap-2">
             {(self || flagged) && (
               <div className="flex items-center gap-2">
                 {self && <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sua resposta</span>}
                 {flagged && (
-                  <span className="ml-auto inline-flex flex-none items-center gap-1 text-xs font-bold text-party-red">
-                    <Alert size={16} />
-                    parece repetida?
+                  <span className="ml-auto inline-flex flex-none items-center gap-2">
+                    {showOrder && <span className="pill">chegou {arrival}º</span>}
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-party-red">
+                      <Alert size={16} />
+                      parece repetida?
+                    </span>
                   </span>
                 )}
               </div>
@@ -100,7 +108,7 @@ export function Vote({ round, players, answers, votes, meId, isHost, roomId }: {
                   }
                 }}
               >
-                marcar repetida
+                {arrival > 1 ? "marcar repetida (chegou depois)" : "marcar repetida"}
               </button>
             )}
 
